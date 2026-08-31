@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from factor_backtest.analytics import (
+from factor_backtest_platform.analytics import (
     compute_daily_group_returns,
     compute_daily_equivalent_long_short_returns,
     compute_daily_ic,
@@ -14,7 +14,7 @@ from factor_backtest.analytics import (
     compute_quality_metrics,
     compute_yearly_ic_stats,
 )
-from factor_backtest.filters import compute_tradability_mask
+from factor_backtest_platform.filters import compute_tradability_mask
 
 
 def _dates():

@@ -1,7 +1,7 @@
-from factor_backtest.clickhouse_adapter import load_market_data_from_clickhouse
-from factor_backtest.config import BacktestConfig, CompanyDiagnosticsConfig, DataSourceConfig, HandoffConfig, PathConfig
-from factor_backtest.factor_loader import load_factor_file, resolve_factor_path
-from factor_backtest.runner import run_factor_backtest
+from factor_backtest_platform.clickhouse_adapter import load_market_data_from_clickhouse
+from factor_backtest_platform.config import BacktestConfig, CompanyDiagnosticsConfig, DataSourceConfig, HandoffConfig, PathConfig
+from factor_backtest_platform.factor_loader import load_factor_file, resolve_factor_path
+from factor_backtest_platform.runner import run_factor_backtest
 
 
 def main() -> None:

@@ -1,8 +1,8 @@
 import tomllib
 from pathlib import Path
 
-from factor_backtest import __version__
-from factor_backtest.config import BacktestConfig, DEFAULT_HORIZON_COLORS, POOL_REGISTRY, ClickHouseConfig, ClickHouseTableConfig, PathConfig
+from factor_backtest_platform import __version__
+from factor_backtest_platform.config import BacktestConfig, DEFAULT_HORIZON_COLORS, POOL_REGISTRY, ClickHouseConfig, ClickHouseTableConfig, PathConfig
 
 
 def test_backtest_config_defaults_match_design():
@@ -56,6 +56,10 @@ def test_path_config_normalizes_string_paths():
 
 def test_clickhouse_config_defaults_do_not_embed_credentials(monkeypatch):
     for name in (
+        "FACTOR_BACKTEST_PLATFORM_CLICKHOUSE_HOST",
+        "FACTOR_BACKTEST_PLATFORM_CLICKHOUSE_PORT",
+        "FACTOR_BACKTEST_PLATFORM_CLICKHOUSE_USERNAME",
+        "FACTOR_BACKTEST_PLATFORM_CLICKHOUSE_PASSWORD",
         "FACTOR_BACKTEST_CLICKHOUSE_HOST",
         "FACTOR_BACKTEST_CLICKHOUSE_PORT",
         "FACTOR_BACKTEST_CLICKHOUSE_USERNAME",
@@ -72,10 +76,10 @@ def test_clickhouse_config_defaults_do_not_embed_credentials(monkeypatch):
 
 
 def test_clickhouse_config_reads_environment(monkeypatch):
-    monkeypatch.setenv("FACTOR_BACKTEST_CLICKHOUSE_HOST", "clickhouse.example")
-    monkeypatch.setenv("FACTOR_BACKTEST_CLICKHOUSE_PORT", "18123")
-    monkeypatch.setenv("FACTOR_BACKTEST_CLICKHOUSE_USERNAME", "researcher")
-    monkeypatch.setenv("FACTOR_BACKTEST_CLICKHOUSE_PASSWORD", "test-only-password")
+    monkeypatch.setenv("FACTOR_BACKTEST_PLATFORM_CLICKHOUSE_HOST", "clickhouse.example")
+    monkeypatch.setenv("FACTOR_BACKTEST_PLATFORM_CLICKHOUSE_PORT", "18123")
+    monkeypatch.setenv("FACTOR_BACKTEST_PLATFORM_CLICKHOUSE_USERNAME", "researcher")
+    monkeypatch.setenv("FACTOR_BACKTEST_PLATFORM_CLICKHOUSE_PASSWORD", "test-only-password")
 
     cfg = ClickHouseConfig()
 
@@ -83,6 +87,27 @@ def test_clickhouse_config_reads_environment(monkeypatch):
     assert cfg.port == 18123
     assert cfg.username == "researcher"
     assert cfg.password == "test-only-password"
+
+
+def test_clickhouse_config_supports_legacy_environment_names(monkeypatch):
+    monkeypatch.setenv("FACTOR_BACKTEST_CLICKHOUSE_HOST", "legacy.example")
+    monkeypatch.setenv("FACTOR_BACKTEST_CLICKHOUSE_PORT", "28123")
+    monkeypatch.setenv("FACTOR_BACKTEST_CLICKHOUSE_USERNAME", "legacy-user")
+    monkeypatch.setenv("FACTOR_BACKTEST_CLICKHOUSE_PASSWORD", "legacy-password")
+
+    cfg = ClickHouseConfig()
+
+    assert cfg.host == "legacy.example"
+    assert cfg.port == 28123
+    assert cfg.username == "legacy-user"
+    assert cfg.password == "legacy-password"
+
+
+def test_platform_clickhouse_environment_names_take_priority(monkeypatch):
+    monkeypatch.setenv("FACTOR_BACKTEST_PLATFORM_CLICKHOUSE_HOST", "platform.example")
+    monkeypatch.setenv("FACTOR_BACKTEST_CLICKHOUSE_HOST", "legacy.example")
+
+    assert ClickHouseConfig().host == "platform.example"
 
 
 def test_platform_distribution_and_output_paths_are_isolated():

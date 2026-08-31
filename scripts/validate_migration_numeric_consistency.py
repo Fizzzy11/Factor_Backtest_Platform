@@ -41,7 +41,7 @@ def _sha256_frame(frame: pd.DataFrame) -> str:
 
 def _build_inputs():
     """构造覆盖 IC、分组、风格、行业和中性化诊断的确定性数据。"""
-    from factor_backtest.market_data import MarketDataBundle
+    from factor_backtest_platform.market_data import MarketDataBundle
 
     dates = pd.bdate_range("2024-01-02", periods=90, name="trade_date")
     symbols = [f"S{i:03d}" for i in range(100)]
@@ -72,7 +72,7 @@ def _build_inputs():
 
 def _write_risk_input(path: Path, dates: pd.DatetimeIndex, symbols: list[str]) -> None:
     """写入每次工作进程都完全相同的风格和行业暴露输入。"""
-    from factor_backtest.risk_exposure import DEFAULT_STYLE_COLUMNS
+    from factor_backtest_platform.risk_exposure import DEFAULT_STYLE_COLUMNS
 
     rows = []
     for day, date in enumerate(dates):
@@ -89,9 +89,9 @@ def _write_risk_input(path: Path, dates: pd.DatetimeIndex, symbols: list[str]) -
 
 def _worker(output_dir: Path) -> None:
     """在当前 PYTHONPATH 所指向的项目中运行一次并保存内存结果快照。"""
-    import factor_backtest
-    from factor_backtest.config import BacktestConfig, DataSourceConfig, PathConfig
-    from factor_backtest.runner import run_factor_backtest
+    import factor_backtest_platform
+    from factor_backtest_platform.config import BacktestConfig, DataSourceConfig, PathConfig
+    from factor_backtest_platform.runner import run_factor_backtest
 
     output_dir.mkdir(parents=True, exist_ok=True)
     factor, market = _build_inputs()
@@ -100,7 +100,7 @@ def _worker(output_dir: Path) -> None:
     _write_risk_input(risk_path, factor.index, list(factor.columns))
     config = BacktestConfig(
         paths=PathConfig(
-            project_dir=Path(factor_backtest.__file__).resolve().parents[1],
+            project_dir=Path(factor_backtest_platform.__file__).resolve().parents[1],
             data_root=output_dir,
             pool_dir=output_dir / "pool",
             risk_exposure_path=risk_path,
@@ -140,8 +140,8 @@ def _worker(output_dir: Path) -> None:
     if missing:
         raise AssertionError(f"数值快照缺少必验表：{missing}")
     snapshot = {
-        "package_version": factor_backtest.__version__,
-        "package_file": str(Path(factor_backtest.__file__).resolve()),
+        "package_version": factor_backtest_platform.__version__,
+        "package_file": str(Path(factor_backtest_platform.__file__).resolve()),
         "factor_hash_before": factor_hash_before,
         "factor_hash_after": _sha256_frame(factor),
         "tables": tables,

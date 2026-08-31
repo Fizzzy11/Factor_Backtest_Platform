@@ -1,6 +1,6 @@
 # Company Diagnostics 设计方案
 
-> 存储说明：本文形成于 2.2.1。2.4.0 起不再复制 `latest/diagnostics/`，diagnostics 只保存在不可变 `runs/<run_id>/diagnostics/`，并由 `latest.json` 指向最新成功 run；本文中的计算和 JSON schema 设计仍然有效。
+> 历史说明：本文形成于 Classic 2.2.1，文中的 `factor_backtest` 路径属于历史包名；Platform 1.0.0 的现行包名为 `factor_backtest_platform`。2.4.0 起不再复制 `latest/diagnostics/`，diagnostics 只保存在不可变 `runs/<run_id>/diagnostics/`，并由 `latest.json` 指向最新成功 run；本文中的计算和 JSON schema 设计仍然有效。
 
 本文档是 `CompanyDiagnosticsConfig` 与四类正式诊断 JSON 的完整设计说明。目标是让后续开发者在没有聊天上下文的情况下，也可以按本文档重新实现同一功能。
 

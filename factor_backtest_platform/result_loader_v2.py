@@ -5,9 +5,9 @@ from pathlib import Path
 
 import pandas as pd
 
-from factor_backtest.io import read_json, read_table
-from factor_backtest.result_store import RESULT_SCHEMA_VERSION, read_result_table, resolve_latest_run
-from factor_backtest.result_views import (
+from factor_backtest_platform.io import read_json, read_table
+from factor_backtest_platform.result_store import RESULT_SCHEMA_VERSION, read_result_table, resolve_latest_run
+from factor_backtest_platform.result_views import (
     GroupReturnView,
     ICView,
     QualityView,

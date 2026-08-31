@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from factor_backtest.config import POOL_REGISTRY
+from factor_backtest_platform.config import POOL_REGISTRY
 
 
 def load_pool_mask(path: str | Path) -> pd.DataFrame:

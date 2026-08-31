@@ -9,8 +9,8 @@ from zoneinfo import ZoneInfo
 
 import pandas as pd
 
-from factor_backtest.config import BacktestConfig, HandoffConfig
-from factor_backtest.io import ensure_dir, read_json, write_json, write_table
+from factor_backtest_platform.config import BacktestConfig, HandoffConfig
+from factor_backtest_platform.io import ensure_dir, read_json, write_json, write_table
 
 
 REQUIRED_CORE_TABLES = [
@@ -43,6 +43,10 @@ HANDOFF_TABLE_MAP = {
     "group_turnover_edge_summary.csv": ("group_turnover", "group_turnover_edge_summary"),
     "data_quality.csv": ("data_quality", "data_quality"),
 }
+
+# 这两个名称属于既有 handoff 磁盘契约。为保证历史消费者可读，Platform 1.0.0 不改名。
+HANDOFF_COMMIT_FILENAME = "factor_backtest_commit.txt"
+HANDOFF_COMMIT_KEY = "factor_backtest_commit"
 
 
 def export_factor_backtest_platform_handoff(
@@ -104,7 +108,7 @@ def export_factor_backtest_platform_handoff(
         write_json(_pending_diagnostic_payload(diagnostic_name), diagnostics_dir / diagnostic_name)
 
     ensure_dir(output_dir)
-    (output_dir / "factor_backtest_commit.txt").write_text(commit + "\n", encoding="utf-8")
+    (output_dir / HANDOFF_COMMIT_FILENAME).write_text(commit + "\n", encoding="utf-8")
     (output_dir / "README.md").write_text(_handoff_readme(), encoding="utf-8")
     (output_dir / "platform_schema_notes.md").write_text(_schema_notes(handoff), encoding="utf-8")
     return output_dir
@@ -186,7 +190,7 @@ def _build_handoff_meta(
         "run_time": run_time,
         "factor_name": factor_name,
         "data_asof": data_asof,
-        "factor_backtest_commit": commit,
+        HANDOFF_COMMIT_KEY: commit,
         "env": {
             "python": platform.python_version(),
             "host": platform.node(),

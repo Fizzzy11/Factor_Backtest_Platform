@@ -12,7 +12,7 @@ from uuid import uuid4
 
 import pandas as pd
 
-from factor_backtest.sections import SectionResult
+from factor_backtest_platform.sections import SectionResult
 
 
 RESULT_SCHEMA_VERSION = "2.0"

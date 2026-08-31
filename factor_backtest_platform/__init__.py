@@ -1,6 +1,6 @@
 """因子排序回测框架公开接口。"""
 
-from factor_backtest.config import (
+from factor_backtest_platform.config import (
     BacktestConfig,
     ClickHouseConfig,
     ClickHouseTableConfig,
@@ -8,17 +8,17 @@ from factor_backtest.config import (
     DataSourceConfig,
     HandoffConfig,
 )
-from factor_backtest.result_loader import LoadedBacktestResult, load_backtest_result
-from factor_backtest.result_views import GroupReturnView, ICView, QualityView
-from factor_backtest.risk_exposure import RiskExposureData, RiskExposurePanel, load_risk_exposure_from_csv, resolve_risk_exposure
-from factor_backtest.returns import ReturnSpec, normalize_external_returns, normalize_return_dataframe
-from factor_backtest.runner import (
+from factor_backtest_platform.result_loader import LoadedBacktestResult, load_backtest_result
+from factor_backtest_platform.result_views import GroupReturnView, ICView, QualityView
+from factor_backtest_platform.risk_exposure import RiskExposureData, RiskExposurePanel, load_risk_exposure_from_csv, resolve_risk_exposure
+from factor_backtest_platform.returns import ReturnSpec, normalize_external_returns, normalize_return_dataframe
+from factor_backtest_platform.runner import (
     render_factor_backtest_report,
     run_factor_backtest,
     run_factor_backtest_data,
     run_factor_backtest_minimal,
 )
-from factor_backtest.version import __version__
+from factor_backtest_platform.version import __version__
 
 __all__ = [
     "BacktestConfig",

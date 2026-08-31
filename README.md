@@ -1,8 +1,10 @@
 # Factor_Backtest_Platform 1.0.0
 
+项目地址：[https://github.com/Fizzzy11/Factor_Backtest_Platform](https://github.com/Fizzzy11/Factor_Backtest_Platform)
+
 本项目是面向大规模日频因子回测和只读 Dashboard 的平台版。它用于评估因子的截面排序能力，不是传统撮合式交易回测框架；主要关注不同股票池内的 RankIC、分组收益、多空收益、覆盖率和异常值诊断。
 
-当前产品版本为 `1.0.0`，Python distribution 名称为 `factor-backtest-platform`，导入名称仍为 `factor_backtest`。新运行结果继续使用独立的 Schema 2.0：
+当前产品版本为 `1.0.0`，Python distribution 名称为 `factor-backtest-platform`，导入名称为 `factor_backtest_platform`。新运行结果继续使用独立的 Schema 2.0：
 
 ```json
 {
@@ -20,7 +22,7 @@
 - `Factor_Backtest 2.4.0` 开发阶段：在原项目工作区完成紧凑 Parquet、`latest.json`、不可变 runs、动态查询接口和按需报告改造。它是项目拆分前的开发过渡版本，不再作为 Classic 的正式发布版本。
 - `Factor_Backtest_Platform 1.0.0`：将上述规模化改造迁移为独立项目，作为平台版首个正式版本；默认服务批量因子回测和 Dashboard，同时保留按需生成静态报告的能力。
 
-Classic 与 Platform 都使用 `import factor_backtest`，不得安装在同一个虚拟环境。Dashboard 只读取 Platform 的已发布结果，不重新运行回测，也不直接访问 ClickHouse 或原始因子数据重算指标。
+Classic 使用 `import factor_backtest`，Platform 使用 `import factor_backtest_platform`。两个 distribution 可以安全安装在同一个虚拟环境，且卸载其中一个不会删除另一个的包文件。Dashboard 只读取 Platform 的已发布结果，不重新运行回测，也不直接访问 ClickHouse 或原始因子数据重算指标。
 
 ## Platform 1.0.0 功能
 
@@ -78,7 +80,7 @@ Classic 与 Platform 都使用 `import factor_backtest`，不得安装在同一�
 
 本次更新包括：
 - 新增正式 `CompanyDiagnosticsConfig`，与第一轮 `HandoffConfig` 验收样例包分离。
-- 新增 `factor_backtest/company_diagnostics.py`，支持 production book、peer book 和 regime 宽表输入。
+- 新增 `factor_backtest_platform/company_diagnostics.py`，支持 production book、peer book 和 regime 宽表输入。
 - `spanning.json` 支持基于 production book 的迭代 top-k 残差化，并输出 `incremental_ic` 与 `incremental_r2`。
 - `crowding.json` 按 pool 输出 peer 相似度、TopK overlap 和拥挤度指标。
 - `diversity.json` 基于 `all` pool 输出相对 peer book 的新颖度。
@@ -148,18 +150,18 @@ output_root = "/data/zhangyuan/Factor_Backtest_Platform_Result"
 
 代码目录为 `/app/workspace/zhangyuan/Factor_Backtest_Platform`，调用脚本目录为 `/app/workspace/zhangyuan/Factor_Backtest_Platform_Result`，结果目录为 `/data/zhangyuan/Factor_Backtest_Platform_Result`。共享输入仍位于 `/data/zhangyuan`，股票池仍位于 `/data/zhangyuan/pool`；无需复制因子文件或数据库数据，也不得把 Platform 输出写入 Classic 的 `/data/zhangyuan/Factor_Backtest_Result`。
 
-服务器使用独立虚拟环境安装，避免覆盖 Classic 的同名导入包：
+服务器统一使用 `/app/workspace/zhangyuan/.venv`。Classic 与 Platform 的导入包名不同，可以在同一环境安装：
 
 ```bash
-cd /app/workspace/zhangyuan/Factor_Backtest_Platform
-/app/workspace/zhangyuan/.venv_factor_backtest_platform/bin/python -m pip install -e .
+/app/workspace/zhangyuan/.venv/bin/python -m pip install -e /app/workspace/zhangyuan/Factor_Backtest
+/app/workspace/zhangyuan/.venv/bin/python -m pip install -e /app/workspace/zhangyuan/Factor_Backtest_Platform
 ```
 
 安装后可以在任意目录调用，例如：
 
 ```bash
 cd /app/workspace/zhangyuan/Factor_Backtest_Platform_Result
-/app/workspace/zhangyuan/.venv_factor_backtest_platform/bin/python factor_dm_20d/run_factor_dm_20d.py
+/app/workspace/zhangyuan/.venv/bin/python factor_dm_20d/run_factor_dm_20d.py
 ```
 
 项目内提供了一个示例脚本：
@@ -288,18 +290,19 @@ min_listed_days = 120
 框架已经内置 ClickHouse 读取函数。连接信息通过环境变量注入：
 
 ```text
-FACTOR_BACKTEST_CLICKHOUSE_HOST
-FACTOR_BACKTEST_CLICKHOUSE_PORT
-FACTOR_BACKTEST_CLICKHOUSE_USERNAME
-FACTOR_BACKTEST_CLICKHOUSE_PASSWORD
+FACTOR_BACKTEST_PLATFORM_CLICKHOUSE_HOST
+FACTOR_BACKTEST_PLATFORM_CLICKHOUSE_PORT
+FACTOR_BACKTEST_PLATFORM_CLICKHOUSE_USERNAME
+FACTOR_BACKTEST_PLATFORM_CLICKHOUSE_PASSWORD
 ```
 
 禁止把生产连接密码写入脚本、文档或 Git；未配置时只使用本机无密码开发默认值。
+迁移期间仍兼容旧的 `FACTOR_BACKTEST_CLICKHOUSE_*` 变量；同时存在时，Platform 专用变量优先。
 
 使用示例：
 
 ```python
-from factor_backtest.clickhouse_adapter import load_market_data_from_clickhouse
+from factor_backtest_platform.clickhouse_adapter import load_market_data_from_clickhouse
 
 market_data = load_market_data_from_clickhouse(
     start_date="2020-01-01",
@@ -360,15 +363,15 @@ enabled_sections = "all"
 
 每个模块独立计算和渲染。可选诊断失败会记录到 `run_log.json` 和 `manifest.json`，不会影响其他模块；已启用的 `data_quality`、`cumulative_ic` 或 `group_return` 失败时不会发布该 run，也不会更新 `latest.json`。
 
-新增诊断模块时，在 `factor_backtest/sections.py` 中实现 `ReportSection` 子类并返回 `SectionResult`，为模块设置唯一 `name` 和依赖关系，再将实例加入 `DEFAULT_SECTIONS`。如果新模块有不能从现有基础表廉价重算的日度数据，还需在 `factor_backtest/result_store.py` 的持久化白名单中登记，并补充 Parquet 写入、加载、日期过滤和报告重建测试；不得在加载器或 Dashboard 中另写一套金融计算公式。
+新增诊断模块时，在 `factor_backtest_platform/sections.py` 中实现 `ReportSection` 子类并返回 `SectionResult`，为模块设置唯一 `name` 和依赖关系，再将实例加入 `DEFAULT_SECTIONS`。如果新模块有不能从现有基础表廉价重算的日度数据，还需在 `factor_backtest_platform/result_store.py` 的持久化白名单中登记，并补充 Parquet 写入、加载、日期过滤和报告重建测试；不得在加载器或 Dashboard 中另写一套金融计算公式。
 
 ## 平台 handoff 交付包
 
 如果需要按公司平台验收任务书生成 `docs/handoffs/factor_backtest_platform/sample_latest/`，可以打开 handoff 开关。它不会改变正常 run 和 `latest.json`，只会在真实回测完成后额外整理 5 张核心 CSV、`run_meta.json`、`run_log.json` 和 4 个 pending diagnostics JSON。
 
 ```python
-from factor_backtest import BacktestConfig, HandoffConfig
-from factor_backtest.config import DataSourceConfig
+from factor_backtest_platform import BacktestConfig, HandoffConfig
+from factor_backtest_platform.config import DataSourceConfig
 
 cfg = BacktestConfig(
     factor_name="smoke_factor_v1",
@@ -459,7 +462,7 @@ PNG 图表标题统一使用英文，避免服务器缺少中文字体时出现 
 最精简版统计输出可以用于批量因子训练：
 
 ```python
-from factor_backtest import run_factor_backtest_minimal
+from factor_backtest_platform import run_factor_backtest_minimal
 
 summary = run_factor_backtest_minimal(
     factor_df=factor_df,
@@ -471,7 +474,7 @@ summary = run_factor_backtest_minimal(
 只跑数据、不画图：
 
 ```python
-from factor_backtest import render_factor_backtest_report, run_factor_backtest_data
+from factor_backtest_platform import render_factor_backtest_report, run_factor_backtest_data
 
 result = run_factor_backtest_data(
     factor_df=factor_df,
@@ -488,7 +491,7 @@ render_factor_backtest_report(result.run_dir)
 读取已有结果：
 
 ```python
-from factor_backtest import load_backtest_result, render_factor_backtest_report
+from factor_backtest_platform import load_backtest_result, render_factor_backtest_report
 
 result = load_backtest_result(factor_name="factor_dm_20d", run="latest")
 
@@ -550,7 +553,7 @@ IC 统计默认同时输出普通 t-stat 和 Newey-West HAC t-stat。内置 1D/5
 配置：
 
 ```python
-from factor_backtest.config import BacktestConfig, DataSourceConfig, PathConfig
+from factor_backtest_platform.config import BacktestConfig, DataSourceConfig, PathConfig
 
 cfg = BacktestConfig(
     paths=PathConfig(
@@ -722,22 +725,22 @@ result = run_factor_backtest(
 
 ## 取数配置集中化
 
-可变取数配置集中在 `factor_backtest.config`。当前行情、ST、停牌等可通过 ClickHouse 获取；pool 暂时仍使用 CSV；因子值长期保留文件和数据库双入口的设计空间；风格暴露和行业数据当前通过本地 parquet/csv 文件读取，并预留 ClickHouse 切换入口。
+可变取数配置集中在 `factor_backtest_platform.config`。当前行情、ST、停牌等可通过 ClickHouse 获取；pool 暂时仍使用 CSV；因子值长期保留文件和数据库双入口的设计空间；风格暴露和行业数据当前通过本地 parquet/csv 文件读取，并预留 ClickHouse 切换入口。
 
 ClickHouse 连接信息不写入代码库。运行前通过环境变量配置：
 
 ```bash
-export FACTOR_BACKTEST_CLICKHOUSE_HOST="clickhouse.example"
-export FACTOR_BACKTEST_CLICKHOUSE_PORT="8123"
-export FACTOR_BACKTEST_CLICKHOUSE_USERNAME="researcher"
-export FACTOR_BACKTEST_CLICKHOUSE_PASSWORD="请从安全凭据系统注入"
+export FACTOR_BACKTEST_PLATFORM_CLICKHOUSE_HOST="clickhouse.example"
+export FACTOR_BACKTEST_PLATFORM_CLICKHOUSE_PORT="8123"
+export FACTOR_BACKTEST_PLATFORM_CLICKHOUSE_USERNAME="researcher"
+export FACTOR_BACKTEST_PLATFORM_CLICKHOUSE_PASSWORD="请从安全凭据系统注入"
 ```
 
 未设置时使用 `localhost:8123`、用户 `default` 和空密码。`.env` 文件已被 Git 忽略；框架不会自动加载 `.env`，如需使用应由部署系统或进程启动脚本注入环境变量。
 
 ```python
-from factor_backtest import BacktestConfig
-from factor_backtest.config import ClickHouseConfig, ClickHouseTableConfig, DataSourceConfig, PathConfig
+from factor_backtest_platform import BacktestConfig
+from factor_backtest_platform.config import ClickHouseConfig, ClickHouseTableConfig, DataSourceConfig, PathConfig
 
 cfg = BacktestConfig(
     paths=PathConfig(
@@ -807,7 +810,7 @@ regime:          date/trade_date, bull, bear, high_vol, low_vol
 最小配置示例：
 
 ```python
-from factor_backtest import BacktestConfig, CompanyDiagnosticsConfig
+from factor_backtest_platform import BacktestConfig, CompanyDiagnosticsConfig
 
 company_diagnostics_enabled = True
 

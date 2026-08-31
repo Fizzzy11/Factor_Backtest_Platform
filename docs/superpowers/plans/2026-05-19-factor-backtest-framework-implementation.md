@@ -1,5 +1,7 @@
 # Factor Backtest Framework Implementation Plan
 
+> 历史说明：本文记录 Classic 初始实现计划，文中的 `factor_backtest` 路径仅代表 Classic 时代的包名，不是 Platform 1.0.0 的现行导入规范。Platform 现行包名为 `factor_backtest_platform`。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build the first runnable version of the factor ranking backtest framework described in `docs/superpowers/specs/2026-05-19-factor-backtest-framework-design.md`.
@@ -177,4 +179,3 @@ Expected: PASS.
 ## Self-Review
 
 This plan covers the approved design at first-version scope: factor loading, data normalization, calendar logic, pool masks, tradability filtering, RankIC, grouped returns, modular artifacts, isolated report sections, ClickHouse field mapping, and Chinese documentation. Full HTML dashboard polish and real server ClickHouse execution are intentionally deferred because local verification cannot connect to the production data service.
-

@@ -6,8 +6,8 @@ from functools import lru_cache
 import numpy as np
 import pandas as pd
 
-from factor_backtest.risk_exposure import RiskExposureData, RiskExposurePanel
-from factor_backtest.returns import return_label, sort_return_labels
+from factor_backtest_platform.risk_exposure import RiskExposureData, RiskExposurePanel
+from factor_backtest_platform.returns import return_label, sort_return_labels
 
 SUPPORTED_IC_METHODS = ("spearman", "pearson")
 

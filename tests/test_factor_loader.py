@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from factor_backtest.factor_loader import load_factor_file, normalize_factor_dataframe, resolve_factor_path
+from factor_backtest_platform.factor_loader import load_factor_file, normalize_factor_dataframe, resolve_factor_path
 
 
 def test_normalize_wide_factor_dataframe_keeps_trade_date_by_symbol_shape():

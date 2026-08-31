@@ -1,7 +1,7 @@
 import pandas as pd
 
-from factor_backtest.clickhouse_adapter import build_market_data_sql, dataframe_to_market_data, load_market_data_from_clickhouse
-from factor_backtest.config import ClickHouseConfig, ClickHouseTableConfig, DataSourceConfig
+from factor_backtest_platform.clickhouse_adapter import build_market_data_sql, dataframe_to_market_data, load_market_data_from_clickhouse
+from factor_backtest_platform.config import ClickHouseConfig, ClickHouseTableConfig, DataSourceConfig
 
 
 def test_build_market_data_sql_contains_required_tables_and_fields():

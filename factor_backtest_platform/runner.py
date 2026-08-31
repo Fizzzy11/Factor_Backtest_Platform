@@ -11,7 +11,7 @@ from zoneinfo import ZoneInfo
 import numpy as np
 import pandas as pd
 
-from factor_backtest.analytics import (
+from factor_backtest_platform.analytics import (
     compute_daily_group_returns,
     compute_daily_ic,
     compute_ic_stats,
@@ -20,17 +20,17 @@ from factor_backtest.analytics import (
     compute_quality_metrics,
     validate_ic_methods,
 )
-from factor_backtest.config import BacktestConfig
-from factor_backtest.company_diagnostics import export_company_diagnostics
-from factor_backtest.filters import compute_tradability_mask
-from factor_backtest.handoff import export_factor_backtest_platform_handoff
-from factor_backtest.io import ensure_dir, read_json, read_table, write_json, write_table
-from factor_backtest.io import format_table_float
-from factor_backtest.market_data import MarketDataBundle
-from factor_backtest.pools import resolve_selected_pools
-from factor_backtest.risk_exposure import resolve_risk_exposure
-from factor_backtest.returns import build_return_specs, return_label, return_slug, sort_return_labels
-from factor_backtest.result_store import (
+from factor_backtest_platform.config import BacktestConfig
+from factor_backtest_platform.company_diagnostics import export_company_diagnostics
+from factor_backtest_platform.filters import compute_tradability_mask
+from factor_backtest_platform.handoff import export_factor_backtest_platform_handoff
+from factor_backtest_platform.io import ensure_dir, read_json, read_table, write_json, write_table
+from factor_backtest_platform.io import format_table_float
+from factor_backtest_platform.market_data import MarketDataBundle
+from factor_backtest_platform.pools import resolve_selected_pools
+from factor_backtest_platform.risk_exposure import resolve_risk_exposure
+from factor_backtest_platform.returns import build_return_specs, return_label, return_slug, sort_return_labels
+from factor_backtest_platform.result_store import (
     LATEST_SCHEMA_VERSION,
     RESULT_SCHEMA_VERSION,
     PreparedRunPaths,
@@ -39,8 +39,8 @@ from factor_backtest.result_store import (
     write_manifest,
     write_result_data,
 )
-from factor_backtest.sections import DEFAULT_SECTIONS, ReportSection, SectionResult
-from factor_backtest.version import __version__
+from factor_backtest_platform.sections import DEFAULT_SECTIONS, ReportSection, SectionResult
+from factor_backtest_platform.version import __version__
 
 
 RISK_EXPOSURE_SECTIONS = {
@@ -516,7 +516,7 @@ def render_factor_backtest_report(run_dir: str | Path) -> Path:
     status: dict[str, dict[str, SectionResult]] = {}
     manifest_path = run_path / "manifest.json"
     if manifest_path.exists():
-        from factor_backtest.result_loader import LoadedBacktestResult
+        from factor_backtest_platform.result_loader import LoadedBacktestResult
 
         loaded = LoadedBacktestResult(
             run_dir=run_path,

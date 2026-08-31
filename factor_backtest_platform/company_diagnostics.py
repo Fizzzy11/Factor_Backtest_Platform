@@ -8,9 +8,9 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from factor_backtest.config import BacktestConfig, CompanyDiagnosticsConfig
-from factor_backtest.io import ensure_dir, write_json
-from factor_backtest.returns import return_label
+from factor_backtest_platform.config import BacktestConfig, CompanyDiagnosticsConfig
+from factor_backtest_platform.io import ensure_dir, write_json
+from factor_backtest_platform.returns import return_label
 
 
 DATE_COLUMNS = ("date", "trade_date")

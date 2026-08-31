@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from factor_backtest.result_loader import load_backtest_result
+from factor_backtest_platform.result_loader import load_backtest_result
 
 
 def test_load_backtest_result_reads_latest_metadata_and_tables():

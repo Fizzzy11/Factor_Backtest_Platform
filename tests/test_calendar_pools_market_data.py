@@ -2,10 +2,10 @@ import pandas as pd
 import tempfile
 from pathlib import Path
 
-from factor_backtest.calendar import TradingCalendar
-from factor_backtest.config import POOL_REGISTRY, PoolDefinition
-from factor_backtest.market_data import derive_listed_days_from_open
-from factor_backtest.pools import load_pool_mask, resolve_selected_pools
+from factor_backtest_platform.calendar import TradingCalendar
+from factor_backtest_platform.config import POOL_REGISTRY, PoolDefinition
+from factor_backtest_platform.market_data import derive_listed_days_from_open
+from factor_backtest_platform.pools import load_pool_mask, resolve_selected_pools
 
 
 def test_trading_calendar_shifts_by_trading_days_not_natural_days():

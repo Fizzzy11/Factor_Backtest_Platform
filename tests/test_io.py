@@ -3,7 +3,7 @@ import tempfile
 
 import pandas as pd
 
-from factor_backtest.io import write_table
+from factor_backtest_platform.io import write_table
 
 
 def test_write_table_does_not_disguise_pickle_as_parquet_when_engine_missing():

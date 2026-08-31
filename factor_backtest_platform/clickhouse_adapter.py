@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pandas as pd
 
-from factor_backtest.config import ClickHouseConfig, ClickHouseTableConfig, DataSourceConfig
-from factor_backtest.market_data import MarketDataBundle
+from factor_backtest_platform.config import ClickHouseConfig, ClickHouseTableConfig, DataSourceConfig
+from factor_backtest_platform.market_data import MarketDataBundle
 
 
 def build_market_data_sql(

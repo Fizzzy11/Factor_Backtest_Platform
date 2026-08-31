@@ -7,7 +7,7 @@ from typing import Iterable
 import numpy as np
 import pandas as pd
 
-from factor_backtest.config import BacktestConfig, DataSourceConfig
+from factor_backtest_platform.config import BacktestConfig, DataSourceConfig
 
 
 DEFAULT_STYLE_COLUMNS = (

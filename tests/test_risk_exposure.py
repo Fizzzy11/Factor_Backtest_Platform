@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from factor_backtest.analytics import (
+from factor_backtest_platform.analytics import (
     compute_group_exposure_diagnostics,
     compute_group_turnover,
     compute_factor_style_exposure_corr,
@@ -14,7 +14,7 @@ from factor_backtest.analytics import (
     neutralize_factor_by_exposure,
     neutralize_factor_by_exposure_panel,
 )
-from factor_backtest.risk_exposure import (
+from factor_backtest_platform.risk_exposure import (
     DEFAULT_STYLE_COLUMNS,
     dataframe_to_risk_exposure,
     load_risk_exposure_from_csv,

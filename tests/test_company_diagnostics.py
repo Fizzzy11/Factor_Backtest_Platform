@@ -3,10 +3,10 @@ import json
 import numpy as np
 import pandas as pd
 
-from factor_backtest.config import BacktestConfig, CompanyDiagnosticsConfig, DataSourceConfig, PathConfig
-from factor_backtest.company_diagnostics import export_company_diagnostics, load_regime_frame
-from factor_backtest.market_data import MarketDataBundle
-from factor_backtest.runner import run_factor_backtest
+from factor_backtest_platform.config import BacktestConfig, CompanyDiagnosticsConfig, DataSourceConfig, PathConfig
+from factor_backtest_platform.company_diagnostics import export_company_diagnostics, load_regime_frame
+from factor_backtest_platform.market_data import MarketDataBundle
+from factor_backtest_platform.runner import run_factor_backtest
 
 
 def _sample_factor_market_and_books(tmp_path):

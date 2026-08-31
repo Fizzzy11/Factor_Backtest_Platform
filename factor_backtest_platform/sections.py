@@ -6,9 +6,9 @@ from typing import Any
 
 import pandas as pd
 
-from factor_backtest.config import DEFAULT_HORIZON_COLORS
+from factor_backtest_platform.config import DEFAULT_HORIZON_COLORS
 
-from factor_backtest.analytics import (
+from factor_backtest_platform.analytics import (
     compute_daily_ic,
     compute_daily_equivalent_long_short_returns,
     compute_exposure_corr_summary,
@@ -26,7 +26,7 @@ from factor_backtest.analytics import (
     neutralize_factor_by_exposure,
     neutralize_factor_by_exposure_panel,
 )
-from factor_backtest.returns import return_label, return_slug, sort_return_labels
+from factor_backtest_platform.returns import return_label, return_slug, sort_return_labels
 
 LINE_FIGSIZE = (14, 6)
 BAR_FIGSIZE = (14, 6)

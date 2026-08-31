@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from factor_backtest.analytics import (
+from factor_backtest_platform.analytics import (
     compute_daily_equivalent_long_short_returns,
     compute_exposure_corr_summary,
     compute_exposure_value_summary,
@@ -15,7 +15,7 @@ from factor_backtest.analytics import (
     compute_turnover_summary,
     compute_yearly_ic_stats,
 )
-from factor_backtest.sections import (
+from factor_backtest_platform.sections import (
     CumulativeICSection,
     DataQualitySection,
     FactorStyleExposureSection,

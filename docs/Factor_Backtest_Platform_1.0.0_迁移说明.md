@@ -18,10 +18,10 @@
 ```text
 docs/Factor_Backtest_Dashboard_开发任务书.md
 docs/superpowers/specs/2026-08-26-result-storage-and-query-design.md
-factor_backtest/result_loader_v2.py
-factor_backtest/result_store.py
-factor_backtest/result_views.py
-factor_backtest/version.py
+factor_backtest_platform/result_loader_v2.py
+factor_backtest_platform/result_store.py
+factor_backtest_platform/result_views.py
+factor_backtest_platform/version.py
 tests/test_result_repository_integration.py
 tests/test_result_store.py
 ```
@@ -37,23 +37,23 @@ docs/superpowers/specs/2026-06-17-company-diagnostics-design.md
 docs/使用手册.md
 docs/外部收益与取数配置.md
 examples/run_factor_dm_20d.py
-factor_backtest/__init__.py
-factor_backtest/analytics.py
-factor_backtest/calendar.py
-factor_backtest/clickhouse_adapter.py
-factor_backtest/company_diagnostics.py
-factor_backtest/config.py
-factor_backtest/factor_loader.py
-factor_backtest/filters.py
-factor_backtest/handoff.py
-factor_backtest/io.py
-factor_backtest/market_data.py
-factor_backtest/pools.py
-factor_backtest/result_loader.py
-factor_backtest/returns.py
-factor_backtest/risk_exposure.py
-factor_backtest/runner.py
-factor_backtest/sections.py
+factor_backtest_platform/__init__.py
+factor_backtest_platform/analytics.py
+factor_backtest_platform/calendar.py
+factor_backtest_platform/clickhouse_adapter.py
+factor_backtest_platform/company_diagnostics.py
+factor_backtest_platform/config.py
+factor_backtest_platform/factor_loader.py
+factor_backtest_platform/filters.py
+factor_backtest_platform/handoff.py
+factor_backtest_platform/io.py
+factor_backtest_platform/market_data.py
+factor_backtest_platform/pools.py
+factor_backtest_platform/result_loader.py
+factor_backtest_platform/returns.py
+factor_backtest_platform/risk_exposure.py
+factor_backtest_platform/runner.py
+factor_backtest_platform/sections.py
 notebooks/analyze_factor_result.ipynb
 pyproject.toml
 tests/run_tests.py
@@ -98,11 +98,11 @@ Platform 调用脚本放在 `/app/workspace/zhangyuan/Factor_Backtest_Platform_R
 ## 版本与 Schema
 
 - Python distribution：`factor-backtest-platform`
-- Python 导入名称：`factor_backtest`
+- Python 导入名称：`factor_backtest_platform`
 - Platform 产品版本：`1.0.0`
 - `manifest.json` 结果 Schema：`2.0`
 - `latest.json` Schema：保持 2.4.0 开发阶段的既有定义
-- 未来首个 Platform Git tag：`v1.0.0`
+- Platform 首个 Git tag：`v1.0.0`
 
 产品版本从 1.0.0 开始表示 Classic 与 Platform 的产品边界发生变化，不表示金融计算逻辑或结果 Schema 回退。
 
@@ -122,27 +122,29 @@ render_plots = False
 
 Classic 与 Platform 只读共享 `/data/zhangyuan` 下的因子、行情、风险暴露和 `/data/zhangyuan/pool` 股票池输入。迁移不复制数据库数据，不修改数据库表，也不移动、转换或覆盖历史验证结果。
 
-## 虚拟环境隔离
+## 安装与双包共存
 
-本地环境使用 `D:\hytp\Factor_Backtest_Platform\.venv`。服务器建议使用 `/app/workspace/zhangyuan/.venv_factor_backtest_platform`，并执行：
+本地可使用 `D:\hytp\Factor_Backtest_Platform\.venv`。服务器统一使用 `/app/workspace/zhangyuan/.venv`，Classic 与 Platform 可同时安装：
 
 ```bash
-/app/workspace/zhangyuan/.venv_factor_backtest_platform/bin/python \
-  -m pip install -e /app/workspace/zhangyuan/Factor_Backtest_Platform
+/app/workspace/zhangyuan/.venv/bin/python -m pip install -e /app/workspace/zhangyuan/Factor_Backtest
+/app/workspace/zhangyuan/.venv/bin/python -m pip install -e /app/workspace/zhangyuan/Factor_Backtest_Platform
 ```
 
-安装后必须核对 distribution 名称和版本、`factor_backtest.__version__`，以及 `factor_backtest.__file__` 是否指向 Platform。Classic 与 Platform 的导入名称相同，因此不得安装到同一虚拟环境。
+安装后必须分别核对 `factor-backtest==2.3.0` 与 `factor-backtest-platform==1.0.0`，并确认 `factor_backtest.__file__` 指向 Classic、`factor_backtest_platform.__file__` 指向 Platform。两个 distribution 不共享顶层包文件，单独卸载任一方不得破坏另一方。
 
 ## 本地验收记录
 
 2026-08-31 的本地验收结果：
 
 - `.venv` 中 distribution 名称为 `factor-backtest-platform`，distribution 和导入包版本均为 `1.0.0`。
-- `factor_backtest.__file__` 指向 `D:\hytp\Factor_Backtest_Platform\factor_backtest\__init__.py`。
-- `pytest -q`：133 个测试全部通过。
-- `python -m compileall -q factor_backtest tests scripts examples`：通过。
+- `factor_backtest_platform.__file__` 指向 `D:\hytp\Factor_Backtest_Platform\factor_backtest_platform\__init__.py`。
+- Platform `pytest -q`：140 个测试全部通过；Dashboard `pytest -q`：67 个测试全部通过。
+- `python -m compileall -q factor_backtest_platform tests scripts examples`：通过。
 - `git diff --check`：通过。
-- 49 个 Python、Markdown、TOML 和 notebook 文件均可按 UTF-8 严格解码，无替换字符。
+- `python -m factor_backtest_platform` 可正确输出 distribution、版本、导入名和包路径。
+- Platform 51 个、Dashboard 63 个 Python、Markdown、TOML、JSON、CSS 和 notebook 文件均可按 UTF-8 严格解码，无替换字符。
+- Classic 2.3.0 与 Platform 1.0.0 wheel 的顶层包文件重叠为 0；wheel 和 editable 两种安装方式均可双包共存，分别卸载任一 distribution 后另一方仍可导入。
 - 源 2.4.0 与 Platform 1.0.0 使用同一组合成数据运行，共比较 65 张内存结果表，全部逐值精确一致；两边运行前后因子输入摘要均未变化。
 - 默认模式不生成 PNG 或 HTML；显式报告模式和 `render_factor_backtest_report(run_dir)` 均可生成报告。
 

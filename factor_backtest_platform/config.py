@@ -14,6 +14,13 @@ DEFAULT_HORIZON_COLORS = {
 }
 
 
+def _clickhouse_env(name: str, default: str) -> str:
+    """优先读取 Platform 专用变量，并兼容迁移前的变量名。"""
+    platform_name = f"FACTOR_BACKTEST_PLATFORM_CLICKHOUSE_{name}"
+    legacy_name = f"FACTOR_BACKTEST_CLICKHOUSE_{name}"
+    return os.getenv(platform_name, os.getenv(legacy_name, default))
+
+
 @dataclass(frozen=True)
 class PathConfig:
     project_dir: Path = Path("/app/workspace/zhangyuan/Factor_Backtest_Platform")
@@ -30,12 +37,15 @@ class PathConfig:
 
 @dataclass(frozen=True)
 class ClickHouseConfig:
-    """从环境变量读取 ClickHouse 连接信息，避免在代码库中保存凭据。"""
+    """从环境变量读取 ClickHouse 连接信息，避免在代码库中保存凭据。
 
-    host: str = field(default_factory=lambda: os.getenv("FACTOR_BACKTEST_CLICKHOUSE_HOST", "localhost"))
-    port: int = field(default_factory=lambda: int(os.getenv("FACTOR_BACKTEST_CLICKHOUSE_PORT", "8123")))
-    username: str = field(default_factory=lambda: os.getenv("FACTOR_BACKTEST_CLICKHOUSE_USERNAME", "default"))
-    password: str = field(default_factory=lambda: os.getenv("FACTOR_BACKTEST_CLICKHOUSE_PASSWORD", ""))
+    Platform 专用变量优先；迁移期继续兼容 ``FACTOR_BACKTEST_CLICKHOUSE_*``。
+    """
+
+    host: str = field(default_factory=lambda: _clickhouse_env("HOST", "localhost"))
+    port: int = field(default_factory=lambda: int(_clickhouse_env("PORT", "8123")))
+    username: str = field(default_factory=lambda: _clickhouse_env("USERNAME", "default"))
+    password: str = field(default_factory=lambda: _clickhouse_env("PASSWORD", ""))
 
 
 @dataclass(frozen=True)

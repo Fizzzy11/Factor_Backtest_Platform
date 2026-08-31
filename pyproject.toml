@@ -18,4 +18,4 @@ dependencies = [
 testpaths = ["tests"]
 
 [tool.setuptools.packages.find]
-include = ["factor_backtest*"]
+include = ["factor_backtest_platform*"]

@@ -8,15 +8,15 @@ from pathlib import Path
 
 import pandas as pd
 
-import factor_backtest.runner as runner_module
-import factor_backtest.sections as sections_module
-from factor_backtest.config import BacktestConfig, DataSourceConfig, PathConfig
-from factor_backtest.config import POOL_REGISTRY, PoolDefinition
-from factor_backtest.risk_exposure import DEFAULT_STYLE_COLUMNS
-from factor_backtest.io import read_table
-from factor_backtest.market_data import MarketDataBundle
-from factor_backtest.result_loader import load_backtest_result
-from factor_backtest.runner import (
+import factor_backtest_platform.runner as runner_module
+import factor_backtest_platform.sections as sections_module
+from factor_backtest_platform.config import BacktestConfig, DataSourceConfig, PathConfig
+from factor_backtest_platform.config import POOL_REGISTRY, PoolDefinition
+from factor_backtest_platform.risk_exposure import DEFAULT_STYLE_COLUMNS
+from factor_backtest_platform.io import read_table
+from factor_backtest_platform.market_data import MarketDataBundle
+from factor_backtest_platform.result_loader import load_backtest_result
+from factor_backtest_platform.runner import (
     _dataframe_to_html,
     _write_html_report,
     render_factor_backtest_report,
@@ -24,7 +24,7 @@ from factor_backtest.runner import (
     run_factor_backtest_data,
     run_factor_backtest_minimal,
 )
-from factor_backtest.sections import (
+from factor_backtest_platform.sections import (
     GroupExposureDiagnosticsSection,
     GroupReturnSection,
     GroupTurnoverSection,

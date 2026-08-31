@@ -263,7 +263,7 @@ result.quality_view(pool="all", start_date=..., end_date=...)
 ### 15.2 回归测试
 
 - 全部现有测试继续通过或只因新目录契约进行有依据的更新。
-- `python -m compileall -q factor_backtest tests examples` 通过。
+- `python -m compileall -q factor_backtest_platform tests examples` 通过。
 - 使用固定随机种子的小型数据，对比改造前后所有内存 section 表，数值完全一致。
 - 对比 Schema 1 CSV 与 Schema 2 Parquet 的基础表，允许差异仅来自旧 CSV 四位小数截断；以内存原值为权威。
 
@@ -279,7 +279,7 @@ result.quality_view(pool="all", start_date=..., end_date=...)
 本地测试全部通过后：
 
 1. 获得明确授权后，将 Platform 文件上传到 `/app/workspace/zhangyuan/Factor_Backtest_Platform`，不得改动服务器 Classic 目录。
-2. 使用 `/app/workspace/zhangyuan/.venv_factor_backtest_platform/bin/python` 编译和运行测试，确认 `factor_backtest.__file__` 指向 Platform。
+2. 使用 `/app/workspace/zhangyuan/.venv/bin/python` 编译和运行测试，确认 Classic 的 `factor_backtest.__file__` 与 Platform 的 `factor_backtest_platform.__file__` 分别指向各自项目。
 3. 从已有结果中随机选择至少3个因子，覆盖：
    - 普通单一 Spearman 回测。
    - 多股票池回测。

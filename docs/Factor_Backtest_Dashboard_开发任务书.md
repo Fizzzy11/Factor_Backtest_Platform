@@ -56,7 +56,7 @@ D:\hytp\Factor_Backtest_Dashboard
 - 提供当前视图的图表及 CSV 下载。
 - 展示完整、空缺、失败和损坏状态。
 
-两个项目必须保持独立。核心回测包不得依赖 Dash、Plotly 或浏览器测试依赖。前端看板依赖 `factor-backtest-platform>=1.0.0`；由于 Classic 与 Platform 的导入名称都为 `factor_backtest`，Dashboard 环境不得安装 Classic distribution。
+两个项目必须保持独立。核心回测包不得依赖 Dash、Plotly 或浏览器测试依赖。前端看板依赖 `factor-backtest-platform>=1.0.0`，并只从 `factor_backtest_platform` 导入公共读取接口；Classic 的 `factor_backtest` 可以在同一环境共存。
 
 ### 2.3 结果目录
 
@@ -75,7 +75,7 @@ D:\hytp\Factor_Backtest_Dashboard
 服务器 Python：
 
 ```text
-/app/workspace/zhangyuan/.venv_factor_backtest_dashboard/bin/python
+/app/workspace/zhangyuan/.venv/bin/python
 ```
 
 看板不得向以上结果目录写入缓存、图片、日志、临时文件、索引或修复内容。
@@ -87,12 +87,12 @@ D:\hytp\Factor_Backtest_Dashboard
 - `README.md`
 - `docs/使用手册.md`
 - `docs/superpowers/specs/2026-08-26-result-storage-and-query-design.md`
-- `factor_backtest/result_store.py`
-- `factor_backtest/result_loader.py`
-- `factor_backtest/result_loader_v2.py`
-- `factor_backtest/result_views.py`
-- `factor_backtest/config.py`
-- `factor_backtest/runner.py`
+- `factor_backtest_platform/result_store.py`
+- `factor_backtest_platform/result_loader.py`
+- `factor_backtest_platform/result_loader_v2.py`
+- `factor_backtest_platform/result_views.py`
+- `factor_backtest_platform/config.py`
+- `factor_backtest_platform/runner.py`
 - 与结果存储、读取、视图和 Schema 兼容相关的测试文件
 
 审计时必须回答：
@@ -282,11 +282,11 @@ pip install -e D:\hytp\Factor_Backtest_Platform
 pip install -e D:\hytp\Factor_Backtest_Dashboard
 ```
 
-服务器建议使用 Dashboard 独立虚拟环境：
+服务器统一使用 `/app/workspace/zhangyuan/.venv`，并在同一环境安装核心包和看板：
 
 ```bash
-/app/workspace/zhangyuan/.venv_factor_backtest_dashboard/bin/python -m pip install -e /app/workspace/zhangyuan/Factor_Backtest_Platform
-/app/workspace/zhangyuan/.venv_factor_backtest_dashboard/bin/python -m pip install -e /app/workspace/zhangyuan/Factor_Backtest_Dashboard
+/app/workspace/zhangyuan/.venv/bin/python -m pip install -e /app/workspace/zhangyuan/Factor_Backtest_Platform
+/app/workspace/zhangyuan/.venv/bin/python -m pip install -e /app/workspace/zhangyuan/Factor_Backtest_Dashboard
 ```
 
 不得在源码中硬编码服务器账号、密码、令牌或数据库凭据。

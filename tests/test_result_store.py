@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from factor_backtest.result_store import (
+from factor_backtest_platform.result_store import (
     RESULT_SCHEMA_VERSION,
     _factor_publish_lock,
     prepare_run_paths,
@@ -15,8 +15,8 @@ from factor_backtest.result_store import (
     should_persist_table,
     write_result_data,
 )
-from factor_backtest.result_views import build_group_return_view, build_ic_view, build_quality_view
-from factor_backtest.sections import SectionResult
+from factor_backtest_platform.result_views import build_group_return_view, build_ic_view, build_quality_view
+from factor_backtest_platform.sections import SectionResult
 
 
 def test_staging_run_is_moved_to_immutable_run_and_updates_latest(tmp_path):

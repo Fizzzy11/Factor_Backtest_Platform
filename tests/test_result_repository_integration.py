@@ -4,11 +4,11 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from factor_backtest.config import BacktestConfig
-from factor_backtest.market_data import MarketDataBundle
-from factor_backtest.result_loader import load_backtest_result
-from factor_backtest.runner import render_factor_backtest_report, run_factor_backtest, run_factor_backtest_data
-from factor_backtest.sections import ReportSection
+from factor_backtest_platform.config import BacktestConfig
+from factor_backtest_platform.market_data import MarketDataBundle
+from factor_backtest_platform.result_loader import load_backtest_result
+from factor_backtest_platform.runner import render_factor_backtest_report, run_factor_backtest, run_factor_backtest_data
+from factor_backtest_platform.sections import ReportSection
 
 
 class _FailingCoreSection(ReportSection):
