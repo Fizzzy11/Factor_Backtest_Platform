@@ -4,6 +4,10 @@
 
 本项目由 `D:\hytp\Factor_Backtest` 中尚未提交的 2.4.0 开发成果迁移而来，目标是形成独立的 `Factor_Backtest_Platform 1.0.0`。迁移只改变项目边界、产品版本、默认路径和默认输出开关，不改变金融计算口径、日频因子时间语义或结果 Schema。
 
+## 1.0.1 修复说明
+
+`Factor_Backtest_Platform 1.0.1` 在 1.0.0 初始版本基础上完成独立 distribution `factor-backtest-platform`、独立导入名 `factor_backtest_platform`、包身份测试和现行文档修复，并清理无用 Notebook。该修复版本不改变金融计算、因子日期语义、默认结果目录、`BacktestConfig.framework_version="v2"` 或 Result Schema 2.0；1.0.0 的迁移过程和历史验收记录继续保留。
+
 ## 源项目基线
 
 - 源目录：`D:\hytp\Factor_Backtest`

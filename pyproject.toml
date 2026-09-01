@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "factor-backtest-platform"
-version = "1.0.0"
+version = "1.0.1"
 description = "面向大规模因子回测的结果平台"
 requires-python = ">=3.10"
 dependencies = [

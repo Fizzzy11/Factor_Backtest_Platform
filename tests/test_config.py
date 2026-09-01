@@ -32,7 +32,7 @@ def test_backtest_config_defaults_match_design():
     assert cfg.handoff.output_dir == Path("docs/handoffs/factor_backtest_platform")
     assert cfg.diagnostics.enabled is False
     assert cfg.diagnostics.hypothesis_direction == "unknown"
-    assert cfg.diagnostics.framework_version == "Factor_Backtest_Platform_1_0_0"
+    assert cfg.diagnostics.framework_version == "Factor_Backtest_Platform_1_0_1"
     assert cfg.group_return_windows == {"6m": 120, "1y": 250, "3y": 750, "5y": 1250}
     assert cfg.yearly_ic_min_days == 60
     assert cfg.yearly_ic_include_partial_year is True
@@ -43,7 +43,7 @@ def test_backtest_config_defaults_match_design():
     assert cfg.data_sources.risk_exposure_source == "csv"
     assert cfg.data_sources.clickhouse == ClickHouseConfig()
     assert cfg.data_sources.clickhouse_tables == ClickHouseTableConfig()
-    assert __version__ == "1.0.0"
+    assert __version__ == "1.0.1"
 
 
 def test_path_config_normalizes_string_paths():
@@ -114,7 +114,7 @@ def test_platform_distribution_and_output_paths_are_isolated():
     project = tomllib.loads((Path(__file__).parents[1] / "pyproject.toml").read_text(encoding="utf-8"))["project"]
 
     assert project["name"] == "factor-backtest-platform"
-    assert project["version"] == "1.0.0"
+    assert project["version"] == "1.0.1"
     cfg = BacktestConfig()
     assert cfg.output_root == Path("/data/zhangyuan/Factor_Backtest_Platform_Result")
     assert cfg.output_root != Path("/data/zhangyuan/Factor_Backtest_Result")

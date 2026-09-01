@@ -113,7 +113,7 @@ class CompanyDiagnosticsConfig:
     topk_overlap_k: int = 50
     crowding_threshold: float = 0.7
     min_similarity_stocks: int = 30
-    framework_version: str = "Factor_Backtest_Platform_1_0_0"
+    framework_version: str = "Factor_Backtest_Platform_1_0_1"
 
     def __post_init__(self) -> None:
         for name in ("production_book_path", "peer_book_path", "factor_meta_path", "factor_ls_pnl_path", "regime_path"):

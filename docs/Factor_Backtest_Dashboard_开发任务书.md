@@ -4,7 +4,7 @@
 
 本任务书用于指导 `Factor_Backtest_Dashboard` 独立项目的设计、实现、测试和中文文档编写。
 
-本项目为 `Factor_Backtest_Platform 1.0.0` 及以后兼容版本提供组内只读交互式分析看板。看板负责发现、读取、筛选和展示 Platform 已发布结果，不负责生成因子、不重新执行因子回测，不访问 ClickHouse 或原始因子数据重算指标，也不得改变任何金融计算口径。
+本项目为 `Factor_Backtest_Platform 1.0.1` 及以后兼容版本提供组内只读交互式分析看板。看板负责发现、读取、筛选和展示 Platform 已发布结果，不负责生成因子、不重新执行因子回测，不访问 ClickHouse 或原始因子数据重算指标，也不得改变任何金融计算口径。
 
 执行本任务前必须先审计现有代码和真实结果结构。若任务书中的接口名称、字段名称或文件布局与源码不一致，以源码和现有测试为准，并在实施计划中说明差异。不得为了迎合任务书描述而复制已有逻辑或绕开公共接口。
 
@@ -56,7 +56,7 @@ D:\hytp\Factor_Backtest_Dashboard
 - 提供当前视图的图表及 CSV 下载。
 - 展示完整、空缺、失败和损坏状态。
 
-两个项目必须保持独立。核心回测包不得依赖 Dash、Plotly 或浏览器测试依赖。前端看板依赖 `factor-backtest-platform>=1.0.0`，并只从 `factor_backtest_platform` 导入公共读取接口；Classic 的 `factor_backtest` 可以在同一环境共存。
+两个项目必须保持独立。核心回测包不得依赖 Dash、Plotly 或浏览器测试依赖。前端看板依赖 `factor-backtest-platform>=1.0.1`，并只从 `factor_backtest_platform` 导入公共读取接口；Classic 的 `factor_backtest` 可以在同一环境共存。
 
 ### 2.3 结果目录
 
@@ -155,7 +155,7 @@ D:\hytp\Factor_Backtest_Dashboard
 
 ### 5.1 已确认的核心公共接口契约
 
-当前 `Factor_Backtest_Platform 1.0.0` 不存在名为 `ResultRepository` 的公共类。看板不得假设或自行要求该接口存在，也不得仅为统一命名而修改核心包。
+当前 `Factor_Backtest_Platform 1.0.1` 不存在名为 `ResultRepository` 的公共类。看板不得假设或自行要求该接口存在，也不得仅为统一命名而修改核心包。
 
 当前真实公共入口为：
 
@@ -893,7 +893,7 @@ python -m compileall -q factor_dashboard tests
 README至少说明：
 
 - 项目用途。
-- Factor_Backtest_Platform 1.0.0 是最低推荐版本。
+- Factor_Backtest_Platform 1.0.1 是最低推荐版本。
 - 安装方式。
 - 最小启动命令。
 - 只读和安全边界。

@@ -1,14 +1,14 @@
-# Factor_Backtest_Platform 1.0.0
+# Factor_Backtest_Platform 1.0.1
 
 项目地址：[https://github.com/Fizzzy11/Factor_Backtest_Platform](https://github.com/Fizzzy11/Factor_Backtest_Platform)
 
 本项目是面向大规模日频因子回测和只读 Dashboard 的平台版。它用于评估因子的截面排序能力，不是传统撮合式交易回测框架；主要关注不同股票池内的 RankIC、分组收益、多空收益、覆盖率和异常值诊断。
 
-当前产品版本为 `1.0.0`，Python distribution 名称为 `factor-backtest-platform`，导入名称为 `factor_backtest_platform`。新运行结果继续使用独立的 Schema 2.0：
+当前产品版本为 `1.0.1`，Python distribution 名称为 `factor-backtest-platform`，导入名称为 `factor_backtest_platform`。新运行结果继续使用独立的 Schema 2.0：
 
 ```json
 {
-  "package_version": "1.0.0",
+  "package_version": "1.0.1",
   "framework_version": "v2",
   "result_schema_version": "2.0"
 }
@@ -21,12 +21,13 @@
 - `Factor_Backtest 2.3.0`：经典静态报告版本，默认生成 CSV、PNG 和 HTML，保留供个人分析使用，后续固定在 2.3.x。
 - `Factor_Backtest 2.4.0` 开发阶段：在原项目工作区完成紧凑 Parquet、`latest.json`、不可变 runs、动态查询接口和按需报告改造。它是项目拆分前的开发过渡版本，不再作为 Classic 的正式发布版本。
 - `Factor_Backtest_Platform 1.0.0`：将上述规模化改造迁移为独立项目，作为平台版首个正式版本；默认服务批量因子回测和 Dashboard，同时保留按需生成静态报告的能力。
+- `Factor_Backtest_Platform 1.0.1`：修正独立 distribution、Python 导入命名空间、包身份和现行文档，清理无用 Notebook；不改变金融计算或 Result Schema 2.0。
 
 Classic 使用 `import factor_backtest`，Platform 使用 `import factor_backtest_platform`。两个 distribution 可以安全安装在同一个虚拟环境，且卸载其中一个不会删除另一个的包文件。Dashboard 只读取 Platform 的已发布结果，不重新运行回测，也不直接访问 ClickHouse 或原始因子数据重算指标。
 
-## Platform 1.0.0 功能
+## Platform 1.0.1 当前功能
 
-本版本来源于 `Factor_Backtest 2.4.0` 开发阶段，只改造项目边界、结果存储、读取和静态报告生成方式，不修改因子日期语义、open-to-open 收益、IC、HAC、股票池、可交易过滤、风险行业诊断或分组计算公式。
+本版本延续 `Factor_Backtest_Platform 1.0.0` 从 `Factor_Backtest 2.4.0` 开发阶段迁移的功能，并完成包身份和文档修复；不修改因子日期语义、open-to-open 收益、IC、HAC、股票池、可交易过滤、风险行业诊断或分组计算公式。
 
 - 每次成功回测只保存一个不可变的 `runs/<run_id>/`；`latest.json` 通过相对路径指向最新成功 run，不再复制一份实体 `latest/`，也不使用软连接。
 - 写入先在 `runs/.staging/<run_id>/` 完成，校验核心模块和 Parquet 可读性后再原子发布；同一因子的发布通过文件锁串行化。
@@ -155,6 +156,8 @@ output_root = "/data/zhangyuan/Factor_Backtest_Platform_Result"
 ```bash
 /app/workspace/zhangyuan/.venv/bin/python -m pip install -e /app/workspace/zhangyuan/Factor_Backtest
 /app/workspace/zhangyuan/.venv/bin/python -m pip install -e /app/workspace/zhangyuan/Factor_Backtest_Platform
+/app/workspace/zhangyuan/.venv/bin/python -m pip show factor-backtest-platform
+/app/workspace/zhangyuan/.venv/bin/python -m factor_backtest_platform
 ```
 
 安装后可以在任意目录调用，例如：
@@ -868,7 +871,7 @@ cfg = BacktestConfig(
 | `topk_overlap_k` | `50` | crowding 多空两端 overlap 的 TopK |
 | `crowding_threshold` | `0.7` | 预留配置；当前 `n_peers_above_0.7` 固定按字段名里的 `0.7` 计算 |
 | `min_similarity_stocks` | `30` | RankCorr、残差化和增量 R2 的最小有效股票数 |
-| `framework_version` | `"Factor_Backtest_Platform_1_0_0"` | 写入 diagnostics `meta.framework_version` |
+| `framework_version` | `"Factor_Backtest_Platform_1_0_1"` | 产品构建身份，写入 diagnostics `meta.framework_version`；不是诊断协议或 Result Schema 版本 |
 
 主要口径：
 

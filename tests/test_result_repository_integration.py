@@ -70,8 +70,8 @@ def test_schema2_data_run_is_compact_queryable_and_rerenderable(tmp_path):
     manifest = json.loads((result.run_dir / "manifest.json").read_text(encoding="utf-8"))
     meta = json.loads((result.run_dir / "run_meta.json").read_text(encoding="utf-8"))
     assert manifest["schema_version"] == "2.0"
-    assert manifest["package_version"] == "1.0.0"
-    assert meta["package_version"] == "1.0.0"
+    assert manifest["package_version"] == "1.0.1"
+    assert meta["package_version"] == "1.0.1"
 
     loaded = load_backtest_result(factor_name="factor_schema2_test", output_root=tmp_path)
     assert loaded.run_dir == result.run_dir.resolve()
