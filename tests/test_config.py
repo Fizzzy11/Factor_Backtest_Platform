@@ -90,6 +90,13 @@ def test_clickhouse_config_reads_environment(monkeypatch):
 
 
 def test_clickhouse_config_supports_legacy_environment_names(monkeypatch):
+    for name in (
+        "FACTOR_BACKTEST_PLATFORM_CLICKHOUSE_HOST",
+        "FACTOR_BACKTEST_PLATFORM_CLICKHOUSE_PORT",
+        "FACTOR_BACKTEST_PLATFORM_CLICKHOUSE_USERNAME",
+        "FACTOR_BACKTEST_PLATFORM_CLICKHOUSE_PASSWORD",
+    ):
+        monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("FACTOR_BACKTEST_CLICKHOUSE_HOST", "legacy.example")
     monkeypatch.setenv("FACTOR_BACKTEST_CLICKHOUSE_PORT", "28123")
     monkeypatch.setenv("FACTOR_BACKTEST_CLICKHOUSE_USERNAME", "legacy-user")
