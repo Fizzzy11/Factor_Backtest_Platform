@@ -53,7 +53,7 @@ def create_clickhouse_client(config: ClickHouseConfig | None = None):
     try:
         import clickhouse_connect
     except ImportError as exc:
-        raise ImportError("clickhouse_connect is required to load market data from ClickHouse") from exc
+        raise ImportError("clickhouse_connect is required to load data from ClickHouse") from exc
     return clickhouse_connect.get_client(
         host=cfg.host,
         port=cfg.port,

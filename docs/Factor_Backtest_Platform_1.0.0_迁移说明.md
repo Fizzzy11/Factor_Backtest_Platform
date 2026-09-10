@@ -8,6 +8,10 @@
 
 `Factor_Backtest_Platform 1.0.1` 在 1.0.0 初始版本基础上完成独立 distribution `factor-backtest-platform`、独立导入名 `factor_backtest_platform`、包身份测试和现行文档修复，并清理无用 Notebook。该修复版本不改变金融计算、因子日期语义、默认结果目录、`BacktestConfig.framework_version="v2"` 或 Result Schema 2.0；1.0.0 的迁移过程和历史验收记录继续保留。
 
+## 1.0.2 数据源说明
+
+`Factor_Backtest_Platform 1.0.2` 将风险暴露和行业数据统一切换到 ClickHouse 表 `cn_stock_fundamentals.factor_exposure`，移除本地风险暴露文件路径和加载入口。该版本只改变风险数据的读取位置和配置契约，不改变任何金融计算、因子日期语义、默认结果目录、运行器代际或 Result Schema 2.0。
+
 ## 源项目基线
 
 - 源目录：`D:\hytp\Factor_Backtest`

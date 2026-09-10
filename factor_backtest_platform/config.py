@@ -26,13 +26,11 @@ class PathConfig:
     project_dir: Path = Path("/app/workspace/zhangyuan/Factor_Backtest_Platform")
     data_root: Path = Path("/data/zhangyuan")
     pool_dir: Path = Path("/data/zhangyuan/pool")
-    risk_exposure_path: Path = Path("risk&industry/CNE5_Industry_daily.parquet")
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "project_dir", Path(self.project_dir))
         object.__setattr__(self, "data_root", Path(self.data_root))
         object.__setattr__(self, "pool_dir", Path(self.pool_dir))
-        object.__setattr__(self, "risk_exposure_path", Path(self.risk_exposure_path))
 
 
 @dataclass(frozen=True)
@@ -56,7 +54,7 @@ class ClickHouseTableConfig:
     suspended: str = "cn_stock_fundamentals.is_suspended"
     pool_membership: str | None = None
     factor_values: str | None = None
-    risk_exposure: str | None = None
+    risk_exposure: str = "cn_stock_fundamentals.factor_exposure"
 
 
 @dataclass(frozen=True)
@@ -64,7 +62,7 @@ class DataSourceConfig:
     market_data_source: Literal["clickhouse"] = "clickhouse"
     pool_source: Literal["csv", "clickhouse"] = "csv"
     factor_source: Literal["file", "clickhouse"] = "file"
-    risk_exposure_source: Literal["none", "csv", "clickhouse"] = "csv"
+    risk_exposure_source: Literal["none", "clickhouse"] = "clickhouse"
     clickhouse: ClickHouseConfig = field(default_factory=ClickHouseConfig)
     clickhouse_tables: ClickHouseTableConfig = field(default_factory=ClickHouseTableConfig)
 
@@ -113,7 +111,7 @@ class CompanyDiagnosticsConfig:
     topk_overlap_k: int = 50
     crowding_threshold: float = 0.7
     min_similarity_stocks: int = 30
-    framework_version: str = "Factor_Backtest_Platform_1_0_1"
+    framework_version: str = "Factor_Backtest_Platform_1_0_2"
 
     def __post_init__(self) -> None:
         for name in ("production_book_path", "peer_book_path", "factor_meta_path", "factor_ls_pnl_path", "regime_path"):

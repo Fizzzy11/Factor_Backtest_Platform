@@ -81,6 +81,9 @@ def run_factor_backtest(
     log_fn=print,
 ) -> BacktestRunResult:
     cfg = config or BacktestConfig()
+    standardize_start = perf_counter()
+    factor = _standardize_factor(factor_df)
+    standardize_factor_seconds = _elapsed(standardize_start)
     ic_methods = validate_ic_methods(cfg.ic_methods)
     resolved_factor_name = factor_name or cfg.factor_name or "unnamed_factor"
     run_start = perf_counter()
@@ -90,7 +93,16 @@ def run_factor_backtest(
     _log(cfg, log_fn, f"[v2] starting backtest: {resolved_factor_name}")
     _log(cfg, log_fn, f"[v2] staging directory: {run_dir}")
     section_list = sections if sections is not None else _resolve_sections(cfg)
-    risk_exposure = resolve_risk_exposure(cfg) if _section_list_needs_risk_exposure(section_list) else None
+    risk_exposure = (
+        resolve_risk_exposure(
+            cfg,
+            start_date=factor.index.min(),
+            end_date=factor.index.max(),
+            log_fn=log_fn,
+        )
+        if _section_list_needs_risk_exposure(section_list)
+        else None
+    )
     pools = resolve_selected_pools(
         cfg.selected_pools,
         pool_source=cfg.data_sources.pool_source,
@@ -102,9 +114,7 @@ def run_factor_backtest(
     run_warnings: list[str] = list(risk_exposure.warnings) if risk_exposure is not None else []
     timings: dict = {"pools": {}}
 
-    standardize_start = perf_counter()
-    factor = _standardize_factor(factor_df)
-    timings["standardize_factor_seconds"] = _elapsed(standardize_start)
+    timings["standardize_factor_seconds"] = standardize_factor_seconds
     _log(cfg, log_fn, f"[v2] computing test returns: horizons={cfg.horizons}")
     returns_start = perf_counter()
     return_specs = build_return_specs(
@@ -319,7 +329,7 @@ def run_factor_backtest(
         "min_industry_ic_stocks": cfg.min_industry_ic_stocks,
         "min_group_stocks": cfg.min_group_stocks,
         "risk_exposure_source": cfg.data_sources.risk_exposure_source,
-        "risk_exposure_path": str(cfg.paths.risk_exposure_path),
+        "risk_exposure_table": cfg.data_sources.clickhouse_tables.risk_exposure,
         "enabled_sections": cfg.enabled_sections,
         "group_return_windows": cfg.group_return_windows,
         "yearly_ic_min_days": cfg.yearly_ic_min_days,

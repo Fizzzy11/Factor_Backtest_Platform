@@ -1,14 +1,14 @@
-# Factor_Backtest_Platform 1.0.1
+# Factor_Backtest_Platform 1.0.2
 
 项目地址：[https://github.com/Fizzzy11/Factor_Backtest_Platform](https://github.com/Fizzzy11/Factor_Backtest_Platform)
 
 本项目是面向大规模日频因子回测和只读 Dashboard 的平台版。它用于评估因子的截面排序能力，不是传统撮合式交易回测框架；主要关注不同股票池内的 RankIC、分组收益、多空收益、覆盖率和异常值诊断。
 
-当前产品版本为 `1.0.1`，Python distribution 名称为 `factor-backtest-platform`，导入名称为 `factor_backtest_platform`。新运行结果继续使用独立的 Schema 2.0：
+当前产品版本为 `1.0.2`，Python distribution 名称为 `factor-backtest-platform`，导入名称为 `factor_backtest_platform`。新运行结果继续使用独立的 Schema 2.0：
 
 ```json
 {
-  "package_version": "1.0.1",
+  "package_version": "1.0.2",
   "framework_version": "v2",
   "result_schema_version": "2.0"
 }
@@ -22,12 +22,13 @@
 - `Factor_Backtest 2.4.0` 开发阶段：在原项目工作区完成紧凑 Parquet、`latest.json`、不可变 runs、动态查询接口和按需报告改造。它是项目拆分前的开发过渡版本，不再作为 Classic 的正式发布版本。
 - `Factor_Backtest_Platform 1.0.0`：将上述规模化改造迁移为独立项目，作为平台版首个正式版本；默认服务批量因子回测和 Dashboard，同时保留按需生成静态报告的能力。
 - `Factor_Backtest_Platform 1.0.1`：修正独立 distribution、Python 导入命名空间、包身份和现行文档，清理无用 Notebook；不改变金融计算或 Result Schema 2.0。
+- `Factor_Backtest_Platform 1.0.2`：风险暴露和行业数据正式切换到 ClickHouse 表 `cn_stock_fundamentals.factor_exposure`，移除本地风险暴露文件入口；不改变金融计算或 Result Schema 2.0。
 
 Classic 使用 `import factor_backtest`，Platform 使用 `import factor_backtest_platform`。两个 distribution 可以安全安装在同一个虚拟环境，且卸载其中一个不会删除另一个的包文件。Dashboard 只读取 Platform 的已发布结果，不重新运行回测，也不直接访问 ClickHouse 或原始因子数据重算指标。
 
-## Platform 1.0.1 当前功能
+## Platform 1.0.2 当前功能
 
-本版本延续 `Factor_Backtest_Platform 1.0.0` 从 `Factor_Backtest 2.4.0` 开发阶段迁移的功能，并完成包身份和文档修复；不修改因子日期语义、open-to-open 收益、IC、HAC、股票池、可交易过滤、风险行业诊断或分组计算公式。
+本版本延续 `Factor_Backtest_Platform 1.0.1` 的计算和结果结构，风险暴露改为按因子日期范围从 ClickHouse 读取；不修改因子日期语义、open-to-open 收益、IC、HAC、股票池、可交易过滤、风险行业诊断或分组计算公式。
 
 - 每次成功回测只保存一个不可变的 `runs/<run_id>/`；`latest.json` 通过相对路径指向最新成功 run，不再复制一份实体 `latest/`，也不使用软连接。
 - 写入先在 `runs/.staging/<run_id>/` 完成，校验核心模块和 Parquet 可读性后再原子发布；同一因子的发布通过文件锁串行化。
@@ -547,24 +548,19 @@ IC 统计默认同时输出普通 t-stat 和 Newey-West HAC t-stat。内置 1D/5
 
 ## 风格暴露和行业数据
 
-如需检查因子和 Barra10 风格暴露的关系，或计算风格/行业中性化 IC，可以把风险暴露和行业数据放在：
+风险暴露和行业数据默认从 ClickHouse 表 `cn_stock_fundamentals.factor_exposure` 读取。框架会使用因子宽表的最早、最晚日期生成闭区间查询，并通过 `FINAL` 消除 `ReplacingMergeTree` 尚未物理合并的历史版本。
 
-```text
-/data/zhangyuan/risk&industry/CNE5_Industry_daily.parquet
-```
-
-配置：
+默认配置已经可以直接使用；如需显式配置表名：
 
 ```python
-from factor_backtest_platform.config import BacktestConfig, DataSourceConfig, PathConfig
+from factor_backtest_platform.config import BacktestConfig, ClickHouseTableConfig, DataSourceConfig
 
 cfg = BacktestConfig(
-    paths=PathConfig(
-        data_root="/data/zhangyuan",
-        risk_exposure_path="risk&industry/CNE5_Industry_daily.parquet",
-    ),
     data_sources=DataSourceConfig(
-        risk_exposure_source="csv",
+        risk_exposure_source="clickhouse",
+        clickhouse_tables=ClickHouseTableConfig(
+            risk_exposure="cn_stock_fundamentals.factor_exposure",
+        ),
     ),
     min_industry_ic_stocks=10,
     artifact_level="none",
@@ -572,10 +568,7 @@ cfg = BacktestConfig(
 )
 ```
 
-本地风险暴露文件支持 `.parquet` 和 `.csv`，默认 parquet 读取依赖 `pyarrow`。文件需要包含 `date`/`trade_date`、`symbol`、Barra10 风格暴露和行业信息。行业信息支持两种格式：
-
-- 单列 `industry`：每个 `date-symbol` 一个行业名或行业码，例如 `0..30` 或 `801760.INDX`。这是推荐格式；框架会在需要行业回归或行业暴露时生成内部 dummy，并在 `within_industry_group_return` 中优先使用 compact industry code 快路径。
-- 多列 one-hot 行业 dummy：每个行业一列，属于该行业为 1，否则为 0。
+表必须包含唯一的 `date-symbol` 键、10 个默认风格列，以及 31 个申万一级行业 one-hot 列。行业列名使用 `801010.INDX` 至 `801980.INDX` 的现行行业代码；每行必须且只能有一个行业值为 1。查询结果会转换为框架内部矩阵并按实际因子日期、股票代码对齐，不会由风险暴露表扩充回测股票池。
 
 默认风格列为：
 
@@ -584,9 +577,9 @@ size, non_linear_size, momentum, liquidity, book_to_price,
 leverage, growth, earnings_yield, beta, residual_volatility
 ```
 
-`comovement` 当前会被忽略。行业归属按每日 `date-symbol` 动态读取；无行业归属的股票会在需要行业信息的计算中剔除并给 warning。使用 one-hot 格式时，多行业 dummy 为 1 的股票会同时参与这些行业的行业内分组计算，并使用兼容路径；使用单列 `industry` 格式时，每个 `date-symbol` 只属于一个行业，行业内分组收益会使用 compact code 路径以减少逐行业 dummy 扫描。
+数据库中的 `comovement` 当前不进入默认 Barra10 风格暴露。行业归属按每日 `date-symbol` 动态读取；无行业归属的股票会在需要行业信息的计算中剔除并给 warning，多行业归属会给出数据质量 warning。
 
-默认 `risk_exposure_source="csv"`，所以只要文件存在，`enabled_sections="all"` 会额外输出：
+默认 `risk_exposure_source="clickhouse"`，因此 `enabled_sections="all"` 会额外输出：
 
 - `factor_style_exposure`：每日因子值与 Barra10 暴露的截面相关性，默认 Spearman，也跟随 `ic_methods` 支持 Pearson。
 - `style_neutralized_ic`：用 `factor = intercept + Barra10 + residual` 的 residual 计算 IC。
@@ -603,7 +596,7 @@ leverage, growth, earnings_yield, beta, residual_volatility
 
 风险暴露数据在每个 pool 内会先对齐成内部矩阵缓存，供 `factor_style_exposure`、中性化 IC、`group_exposure_diagnostics` 和 `within_industry_group_return` 复用。panel 会同时保留行业 dummy 矩阵和 compact industry code：中性化 IC、行业暴露诊断继续使用 dummy 口径；行业内分组收益在没有多行业重复归属时使用 code 分组，避免 `date × horizon × 行业数` 的重复全股票扫描。
 
-如果当前环境没有风险暴露文件，需要显式关闭：
+如果本次不需要风险和行业模块，可以显式关闭：
 
 ```python
 data_sources=DataSourceConfig(risk_exposure_source="none")
@@ -612,12 +605,6 @@ data_sources=DataSourceConfig(risk_exposure_source="none")
 关闭后，`enabled_sections="all"` 会跳过这些依赖风险暴露数据的模块，保留基础因子回测模块和不依赖风险暴露的 `group_turnover`。
 
 行业 IC 暂不输出，避免行业数 × horizon × IC 方法导致图表过多。
-
-交互式复盘模板在：
-
-```text
-notebooks/analyze_factor_result.ipynb
-```
 
 详细参数说明见：
 
@@ -728,7 +715,7 @@ result = run_factor_backtest(
 
 ## 取数配置集中化
 
-可变取数配置集中在 `factor_backtest_platform.config`。当前行情、ST、停牌等可通过 ClickHouse 获取；pool 暂时仍使用 CSV；因子值长期保留文件和数据库双入口的设计空间；风格暴露和行业数据当前通过本地 parquet/csv 文件读取，并预留 ClickHouse 切换入口。
+可变取数配置集中在 `factor_backtest_platform.config`。当前行情、ST、停牌、风格暴露和行业数据通过 ClickHouse 获取；pool 暂时仍使用 CSV；因子值长期保留文件和数据库双入口的设计空间。
 
 ClickHouse 连接信息不写入代码库。运行前通过环境变量配置：
 
@@ -750,26 +737,25 @@ cfg = BacktestConfig(
         project_dir="/app/workspace/zhangyuan/Factor_Backtest_Platform",
         data_root="/data/zhangyuan",
         pool_dir="/data/zhangyuan/pool",
-        risk_exposure_path="risk&industry/CNE5_Industry_daily.parquet",
     ),
     data_sources=DataSourceConfig(
         market_data_source="clickhouse",
         pool_source="csv",
         factor_source="file",
-        risk_exposure_source="csv",
+        risk_exposure_source="clickhouse",
         clickhouse=ClickHouseConfig(),
         clickhouse_tables=ClickHouseTableConfig(
             ohlcv="stock_data.view_stock_qfq_adjusted_ohlcv_v2",
             shares="cn_stock_fundamentals.shares",
             st="cn_stock_fundamentals.is_st_stock",
             suspended="cn_stock_fundamentals.is_suspended",
-            risk_exposure=None,
+            risk_exposure="cn_stock_fundamentals.factor_exposure",
         ),
     ),
 )
 ```
 
-现阶段 `pool_source="csv"` 和 `risk_exposure_source="csv"` 是已实现路径；`pool_source="clickhouse"` 和 `risk_exposure_source="clickhouse"` 是未来入库后的统一切换入口，目前会明确报未实现。
+现阶段 `pool_source="csv"`、`risk_exposure_source="clickhouse"` 是正式路径；`pool_source="clickhouse"` 仍是预留入口。风险暴露不再提供本地文件入口；如不需要相关模块，应显式使用 `risk_exposure_source="none"`。
 
 读取 ClickHouse 行情时可以直接传入集中配置：
 
@@ -871,7 +857,7 @@ cfg = BacktestConfig(
 | `topk_overlap_k` | `50` | crowding 多空两端 overlap 的 TopK |
 | `crowding_threshold` | `0.7` | 预留配置；当前 `n_peers_above_0.7` 固定按字段名里的 `0.7` 计算 |
 | `min_similarity_stocks` | `30` | RankCorr、残差化和增量 R2 的最小有效股票数 |
-| `framework_version` | `"Factor_Backtest_Platform_1_0_1"` | 产品构建身份，写入 diagnostics `meta.framework_version`；不是诊断协议或 Result Schema 版本 |
+| `framework_version` | `"Factor_Backtest_Platform_1_0_2"` | 产品构建身份，写入 diagnostics `meta.framework_version`；不是诊断协议或 Result Schema 版本 |
 
 主要口径：
 

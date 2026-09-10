@@ -22,7 +22,7 @@ REQUIRED_PUBLIC_API = {
     "RiskExposurePanel",
     "ReturnSpec",
     "load_backtest_result",
-    "load_risk_exposure_from_csv",
+    "load_risk_exposure_from_clickhouse",
     "normalize_external_returns",
     "normalize_return_dataframe",
     "render_factor_backtest_report",
@@ -38,21 +38,21 @@ def test_platform_uses_independent_distribution_and_import_names():
     project = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
 
     assert project["project"]["name"] == "factor-backtest-platform"
-    assert project["project"]["version"] == "1.0.1"
+    assert project["project"]["version"] == "1.0.2"
     assert project["tool"]["setuptools"]["packages"]["find"]["include"] == ["factor_backtest_platform*"]
     assert (root / "factor_backtest_platform" / "__init__.py").is_file()
     assert not (root / "factor_backtest").exists()
 
 
 def test_platform_public_api_is_available_from_new_import_name():
-    assert factor_backtest_platform.__version__ == "1.0.1"
+    assert factor_backtest_platform.__version__ == "1.0.2"
     assert REQUIRED_PUBLIC_API <= set(factor_backtest_platform.__all__)
     for name in REQUIRED_PUBLIC_API:
         assert hasattr(factor_backtest_platform, name)
 
 
 def test_distribution_metadata_uses_platform_name():
-    assert metadata.version("factor-backtest-platform") == "1.0.1"
+    assert metadata.version("factor-backtest-platform") == "1.0.2"
 
 
 def test_module_entrypoint_reports_platform_identity():
@@ -65,6 +65,6 @@ def test_module_entrypoint_reports_platform_identity():
     )
 
     assert "distribution: factor-backtest-platform" in completed.stdout
-    assert "distribution_version: 1.0.1" in completed.stdout
-    assert "package_version: 1.0.1" in completed.stdout
+    assert "distribution_version: 1.0.2" in completed.stdout
+    assert "package_version: 1.0.2" in completed.stdout
     assert "import_name: factor_backtest_platform" in completed.stdout

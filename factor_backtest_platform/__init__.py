@@ -10,7 +10,12 @@ from factor_backtest_platform.config import (
 )
 from factor_backtest_platform.result_loader import LoadedBacktestResult, load_backtest_result
 from factor_backtest_platform.result_views import GroupReturnView, ICView, QualityView
-from factor_backtest_platform.risk_exposure import RiskExposureData, RiskExposurePanel, load_risk_exposure_from_csv, resolve_risk_exposure
+from factor_backtest_platform.risk_exposure import (
+    RiskExposureData,
+    RiskExposurePanel,
+    load_risk_exposure_from_clickhouse,
+    resolve_risk_exposure,
+)
 from factor_backtest_platform.returns import ReturnSpec, normalize_external_returns, normalize_return_dataframe
 from factor_backtest_platform.runner import (
     render_factor_backtest_report,
@@ -36,7 +41,7 @@ __all__ = [
     "ReturnSpec",
     "__version__",
     "load_backtest_result",
-    "load_risk_exposure_from_csv",
+    "load_risk_exposure_from_clickhouse",
     "normalize_external_returns",
     "normalize_return_dataframe",
     "render_factor_backtest_report",

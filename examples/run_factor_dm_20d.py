@@ -1,5 +1,12 @@
 from factor_backtest_platform.clickhouse_adapter import load_market_data_from_clickhouse
-from factor_backtest_platform.config import BacktestConfig, CompanyDiagnosticsConfig, DataSourceConfig, HandoffConfig, PathConfig
+from factor_backtest_platform.config import (
+    BacktestConfig,
+    ClickHouseTableConfig,
+    CompanyDiagnosticsConfig,
+    DataSourceConfig,
+    HandoffConfig,
+    PathConfig,
+)
 from factor_backtest_platform.factor_loader import load_factor_file, resolve_factor_path
 from factor_backtest_platform.runner import run_factor_backtest
 
@@ -61,10 +68,9 @@ def main() -> None:
     verbose = True
 
     # ===== 7. 风险暴露和行业数据 =====
-    # 默认读取配置的本地 parquet/csv 文件；文件不可用时设为 "none"。
-    # /data/zhangyuan/risk&industry/CNE5_Industry_daily.parquet
-    risk_exposure_source = "csv"
-    risk_exposure_path = "risk&industry/CNE5_Industry_daily.parquet"
+    # 默认按因子日期范围从 ClickHouse 读取；不运行风险模块时可设为 "none"。
+    risk_exposure_source = "clickhouse"
+    risk_exposure_table = "cn_stock_fundamentals.factor_exposure"
     # 供行业内分组收益使用。
     min_industry_ic_stocks = 10
 
@@ -191,8 +197,11 @@ def main() -> None:
         diagnostics_config = CompanyDiagnosticsConfig(enabled=False)
 
     cfg = BacktestConfig(
-        paths=PathConfig(data_root=data_root, risk_exposure_path=risk_exposure_path),
-        data_sources=DataSourceConfig(risk_exposure_source=risk_exposure_source),
+        paths=PathConfig(data_root=data_root),
+        data_sources=DataSourceConfig(
+            risk_exposure_source=risk_exposure_source,
+            clickhouse_tables=ClickHouseTableConfig(risk_exposure=risk_exposure_table),
+        ),
         factor_name=factor_display_name,
         output_root=output_root,
         selected_pools=selected_pools,

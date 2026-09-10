@@ -15,11 +15,13 @@ from factor_backtest_platform.analytics import (
     neutralize_factor_by_exposure_panel,
 )
 from factor_backtest_platform.risk_exposure import (
+    DEFAULT_INDUSTRY_COLUMNS,
     DEFAULT_STYLE_COLUMNS,
+    build_risk_exposure_sql,
     dataframe_to_risk_exposure,
-    load_risk_exposure_from_csv,
-    load_risk_exposure_from_file,
+    load_risk_exposure_from_clickhouse,
 )
+from factor_backtest_platform.config import ClickHouseConfig, ClickHouseTableConfig, DataSourceConfig
 
 
 def _risk_raw() -> pd.DataFrame:
@@ -44,11 +46,8 @@ def _risk_raw() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def test_risk_exposure_loader_ignores_comovement_and_tracks_daily_industry(tmp_path):
-    path = tmp_path / "risk_exposure.csv"
-    _risk_raw().to_csv(path, index=False)
-
-    data = load_risk_exposure_from_csv(path)
+def test_risk_exposure_dataframe_converter_ignores_comovement_and_tracks_daily_industry():
+    data = dataframe_to_risk_exposure(_risk_raw())
 
     assert data.style_columns == DEFAULT_STYLE_COLUMNS
     assert "comovement" not in data.exposures.columns
@@ -62,19 +61,63 @@ def test_risk_exposure_loader_ignores_comovement_and_tracks_daily_industry(tmp_p
     assert second_day.loc["S001", ["银行", "计算机"]].sum() == 2
 
 
-def test_risk_exposure_file_loader_accepts_parquet_path(monkeypatch, tmp_path):
-    path = tmp_path / "CNE5_Industry_daily.parquet"
+def test_build_risk_exposure_sql_uses_final_date_range_and_configured_columns():
+    sql = build_risk_exposure_sql(
+        start_date="2026-01-02",
+        end_date="2026-01-05",
+        table="db.factor_exposure_test",
+    )
 
-    def fake_read_parquet(read_path):
-        assert read_path == path
-        return _risk_raw()
+    assert "FROM db.factor_exposure_test FINAL" in sql
+    assert "date >= '2026-01-02'" in sql
+    assert "date <= '2026-01-05'" in sql
+    assert "date AS trade_date" in sql
+    assert "`801010.INDX`" in sql
+    assert "comovement" not in sql
 
-    monkeypatch.setattr(pd, "read_parquet", fake_read_parquet)
 
-    data = load_risk_exposure_from_file(path)
+def test_load_risk_exposure_from_clickhouse_uses_injected_client():
+    class FakeClient:
+        def __init__(self):
+            self.sql = None
 
+        def query_df(self, sql):
+            self.sql = sql
+            return _risk_raw()
+
+    client = FakeClient()
+    messages = []
+    config = DataSourceConfig(
+        clickhouse=ClickHouseConfig(host="example"),
+        clickhouse_tables=ClickHouseTableConfig(risk_exposure="db.factor_exposure_test"),
+    )
+
+    data = load_risk_exposure_from_clickhouse(
+        config=config,
+        start_date="2026-01-02",
+        end_date="2026-01-05",
+        client=client,
+        log_fn=messages.append,
+    )
+
+    assert "FROM db.factor_exposure_test FINAL" in client.sql
     assert data.style_columns == DEFAULT_STYLE_COLUMNS
     assert len(data.industry_columns) == 2
+    assert any("风险暴露读取完成" in message for message in messages)
+
+
+def test_default_industry_columns_match_database_contract():
+    assert len(DEFAULT_INDUSTRY_COLUMNS) == 31
+    assert len(set(DEFAULT_INDUSTRY_COLUMNS)) == 31
+    assert DEFAULT_INDUSTRY_COLUMNS[0] == "801010.INDX"
+    assert DEFAULT_INDUSTRY_COLUMNS[-1] == "801980.INDX"
+
+
+def test_risk_exposure_rejects_duplicate_date_symbol_keys():
+    raw = pd.concat([_risk_raw(), _risk_raw().iloc[[0]]], ignore_index=True)
+
+    with np.testing.assert_raises_regex(ValueError, "duplicate date-symbol keys"):
+        dataframe_to_risk_exposure(raw)
 
 
 def test_risk_exposure_loader_accepts_date_index_dataframe():

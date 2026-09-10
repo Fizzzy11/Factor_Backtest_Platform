@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from pathlib import Path
+import re
 from typing import Iterable
 
 import numpy as np
@@ -26,6 +26,40 @@ DEFAULT_STYLE_COLUMNS = (
 IGNORED_EXPOSURE_COLUMNS = ("comovement",)
 DATE_COLUMNS = ("trade_date", "date")
 INDUSTRY_CODE_COLUMN = "industry"
+DEFAULT_INDUSTRY_COLUMNS = (
+    "801010.INDX",
+    "801030.INDX",
+    "801040.INDX",
+    "801050.INDX",
+    "801080.INDX",
+    "801110.INDX",
+    "801120.INDX",
+    "801130.INDX",
+    "801140.INDX",
+    "801150.INDX",
+    "801160.INDX",
+    "801170.INDX",
+    "801180.INDX",
+    "801200.INDX",
+    "801210.INDX",
+    "801230.INDX",
+    "801710.INDX",
+    "801720.INDX",
+    "801730.INDX",
+    "801740.INDX",
+    "801750.INDX",
+    "801760.INDX",
+    "801770.INDX",
+    "801780.INDX",
+    "801790.INDX",
+    "801880.INDX",
+    "801890.INDX",
+    "801950.INDX",
+    "801960.INDX",
+    "801970.INDX",
+    "801980.INDX",
+)
+_CLICKHOUSE_TABLE_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*$")
 
 
 @dataclass(frozen=True)
@@ -100,52 +134,94 @@ class RiskExposurePanel:
     has_multi_industry_membership: bool
 
 
-def load_risk_exposure_from_csv(
-    path: str | Path,
+def build_risk_exposure_sql(
     *,
+    start_date,
+    end_date,
+    table: str = "cn_stock_fundamentals.factor_exposure",
     style_columns: Iterable[str] = DEFAULT_STYLE_COLUMNS,
-    ignored_columns: Iterable[str] = IGNORED_EXPOSURE_COLUMNS,
-) -> RiskExposureData:
-    raw = pd.read_csv(path)
-    return dataframe_to_risk_exposure(raw, style_columns=style_columns, ignored_columns=ignored_columns)
+    industry_columns: Iterable[str] = DEFAULT_INDUSTRY_COLUMNS,
+) -> str:
+    """构造按因子日期范围读取风险暴露表的 ClickHouse 查询。"""
+    if not _CLICKHOUSE_TABLE_PATTERN.fullmatch(table):
+        raise ValueError(f"Invalid ClickHouse risk exposure table name: {table!r}")
+    start = _format_query_date(start_date, name="start_date")
+    end = _format_query_date(end_date, name="end_date")
+    if start > end:
+        raise ValueError("start_date must not be later than end_date")
+    styles = tuple(style_columns)
+    industries = tuple(industry_columns)
+    selected_columns = [
+        "date AS trade_date",
+        "symbol",
+        *[_quote_identifier(name) for name in styles],
+        *[_quote_identifier(name) for name in industries],
+    ]
+    return (
+        "SELECT\n  "
+        + ",\n  ".join(selected_columns)
+        + f"\nFROM {table} FINAL"
+        + f"\nWHERE date >= '{start}'"
+        + f"\n  AND date <= '{end}'"
+    )
 
 
-def load_risk_exposure_from_file(
-    path: str | Path,
+def resolve_risk_exposure(
+    config: BacktestConfig,
     *,
-    style_columns: Iterable[str] = DEFAULT_STYLE_COLUMNS,
-    ignored_columns: Iterable[str] = IGNORED_EXPOSURE_COLUMNS,
-) -> RiskExposureData:
-    path = Path(path)
-    suffix = path.suffix.lower()
-    if suffix == ".parquet":
-        raw = pd.read_parquet(path)
-    elif suffix == ".csv":
-        raw = pd.read_csv(path)
-    else:
-        raise ValueError(f"Unsupported risk exposure file type: {path.suffix}")
-    return dataframe_to_risk_exposure(raw, style_columns=style_columns, ignored_columns=ignored_columns)
-
-
-def resolve_risk_exposure(config: BacktestConfig) -> RiskExposureData | None:
+    start_date=None,
+    end_date=None,
+    client=None,
+    log_fn=print,
+) -> RiskExposureData | None:
     source = config.data_sources.risk_exposure_source
     if source == "none":
         return None
-    if source == "csv":
-        path = Path(config.paths.risk_exposure_path)
-        if not path.is_absolute():
-            path = Path(config.paths.data_root) / path
-        return load_risk_exposure_from_file(path)
     if source == "clickhouse":
-        return load_risk_exposure_from_clickhouse(config=config.data_sources)
+        if start_date is None or end_date is None:
+            raise ValueError("ClickHouse risk exposure loading requires start_date and end_date")
+        return load_risk_exposure_from_clickhouse(
+            config=config.data_sources,
+            start_date=start_date,
+            end_date=end_date,
+            client=client,
+            verbose=config.verbose,
+            log_fn=log_fn,
+        )
     raise ValueError(f"Unknown risk_exposure_source: {source}")
 
 
-def load_risk_exposure_from_clickhouse(*, config: DataSourceConfig) -> RiskExposureData:
+def load_risk_exposure_from_clickhouse(
+    *,
+    config: DataSourceConfig,
+    start_date,
+    end_date,
+    client=None,
+    verbose: bool = True,
+    log_fn=print,
+) -> RiskExposureData:
+    """从 ClickHouse 读取指定日期范围内的风格与行业暴露。"""
     table = config.clickhouse_tables.risk_exposure
     if not table:
         raise ValueError("risk_exposure_source='clickhouse' requires clickhouse_tables.risk_exposure")
-    raise NotImplementedError("ClickHouse risk exposure loading is not implemented yet")
+    from factor_backtest_platform.clickhouse_adapter import create_clickhouse_client
+
+    sql = build_risk_exposure_sql(start_date=start_date, end_date=end_date, table=table)
+    if verbose:
+        start = _format_query_date(start_date, name="start_date")
+        end = _format_query_date(end_date, name="end_date")
+        log_fn(f"[v2] 从 ClickHouse 读取风险暴露：{start} -> {end}")
+    clickhouse_client = client or create_clickhouse_client(config.clickhouse)
+    raw = clickhouse_client.query_df(sql)
+    if raw.empty:
+        raise RuntimeError("ClickHouse 未返回指定日期范围内的风险暴露数据")
+    data = dataframe_to_risk_exposure(raw)
+    if verbose:
+        log_fn(
+            f"[v2] 风险暴露读取完成：rows={len(data.exposures):,}, "
+            f"styles={len(data.style_columns)}, industries={len(data.industry_columns)}"
+        )
+    return data
 
 
 def dataframe_to_risk_exposure(
@@ -177,6 +253,10 @@ def dataframe_to_risk_exposure(
         out[col] = pd.to_numeric(out[col], errors="coerce")
     out["symbol"] = out["symbol"].astype(str)
     out["trade_date"] = pd.to_datetime(out["trade_date"])
+    duplicate_keys = out.duplicated(["trade_date", "symbol"], keep=False)
+    if duplicate_keys.any():
+        sample = out.loc[duplicate_keys, ["trade_date", "symbol"]].head(5).to_dict("records")
+        raise ValueError(f"Risk exposure data has duplicate date-symbol keys: {sample}")
     out = out.sort_values(["trade_date", "symbol"])
     exposures = out.set_index(["trade_date", "symbol"])[keep_cols].sort_index()
 
@@ -256,6 +336,19 @@ def _format_industry_label(label) -> str:
     if isinstance(label, (float, np.floating)) and float(label).is_integer():
         return str(int(label))
     return str(label)
+
+
+def _format_query_date(value, *, name: str) -> str:
+    timestamp = pd.Timestamp(value)
+    if pd.isna(timestamp):
+        raise ValueError(f"{name} must be a valid date")
+    return timestamp.strftime("%Y-%m-%d")
+
+
+def _quote_identifier(value: str) -> str:
+    if "`" in value:
+        raise ValueError(f"Invalid ClickHouse column name: {value!r}")
+    return f"`{value}`"
 
 
 def _pick_column(columns, candidates: Iterable[str]) -> str | None:

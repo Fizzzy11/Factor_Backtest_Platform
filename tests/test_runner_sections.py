@@ -12,7 +12,7 @@ import factor_backtest_platform.runner as runner_module
 import factor_backtest_platform.sections as sections_module
 from factor_backtest_platform.config import BacktestConfig, DataSourceConfig, PathConfig
 from factor_backtest_platform.config import POOL_REGISTRY, PoolDefinition
-from factor_backtest_platform.risk_exposure import DEFAULT_STYLE_COLUMNS
+from factor_backtest_platform.risk_exposure import DEFAULT_STYLE_COLUMNS, dataframe_to_risk_exposure
 from factor_backtest_platform.io import read_table
 from factor_backtest_platform.market_data import MarketDataBundle
 from factor_backtest_platform.result_loader import load_backtest_result
@@ -305,7 +305,7 @@ def test_runner_supports_multiple_ic_methods_with_compatibility_outputs():
             assert all((report_path.parent / src).exists() for src in image_sources)
 
 
-def test_runner_renders_risk_exposure_sections_when_csv_source_is_configured():
+def test_runner_renders_risk_exposure_sections_when_clickhouse_source_is_configured(monkeypatch):
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
         dates = pd.bdate_range("2026-01-02", periods=14)
@@ -330,16 +330,14 @@ def test_runner_renders_risk_exposure_sections_when_csv_source_is_configured():
                 row["银行"] = 1 if i < 12 else 0
                 row["计算机"] = 1 if i >= 12 else 0
                 risk_rows.append(row)
-        risk_path = tmp_path / "risk&industry" / "risk_exposure.csv"
-        risk_path.parent.mkdir()
-        pd.DataFrame(risk_rows).to_csv(risk_path, index=False)
+        risk_data = dataframe_to_risk_exposure(pd.DataFrame(risk_rows))
+        monkeypatch.setattr(runner_module, "resolve_risk_exposure", lambda *_args, **_kwargs: risk_data)
         cfg = BacktestConfig(
             paths=PathConfig(
                 data_root=tmp_path,
                 pool_dir=tmp_path / "pool",
-                risk_exposure_path=risk_path.relative_to(tmp_path),
             ),
-            data_sources=DataSourceConfig(risk_exposure_source="csv"),
+            data_sources=DataSourceConfig(risk_exposure_source="clickhouse"),
             output_root=tmp_path / "out",
             selected_pools=["all"],
             horizons=[1],
@@ -387,7 +385,7 @@ def test_runner_renders_risk_exposure_sections_when_csv_source_is_configured():
         assert "Group Membership Change Edge Summary" in rerendered_html
 
 
-def test_runner_can_write_neutralized_factor_tables_when_enabled():
+def test_runner_can_write_neutralized_factor_tables_when_enabled(monkeypatch):
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
         dates = pd.bdate_range("2026-01-02", periods=12)
@@ -410,16 +408,14 @@ def test_runner_can_write_neutralized_factor_tables_when_enabled():
                     row[style] = float(i + day)
                 row["industry"] = "801760.INDX" if i < 12 else "801780.INDX"
                 risk_rows.append(row)
-        risk_path = tmp_path / "risk&industry" / "risk_exposure.csv"
-        risk_path.parent.mkdir()
-        pd.DataFrame(risk_rows).to_csv(risk_path, index=False)
+        risk_data = dataframe_to_risk_exposure(pd.DataFrame(risk_rows))
+        monkeypatch.setattr(runner_module, "resolve_risk_exposure", lambda *_args, **_kwargs: risk_data)
         cfg = BacktestConfig(
             paths=PathConfig(
                 data_root=tmp_path,
                 pool_dir=tmp_path / "pool",
-                risk_exposure_path=risk_path.relative_to(tmp_path),
             ),
-            data_sources=DataSourceConfig(risk_exposure_source="csv"),
+            data_sources=DataSourceConfig(risk_exposure_source="clickhouse"),
             output_root=tmp_path / "out",
             selected_pools=["all"],
             horizons=[1],
@@ -441,7 +437,7 @@ def test_runner_can_write_neutralized_factor_tables_when_enabled():
         assert _artifact_exists(pool_dir, "style_industry_neutralized_factor.parquet")
 
 
-def test_runner_risk_sections_accept_single_industry_code_column():
+def test_runner_risk_sections_accept_single_industry_code_column(monkeypatch):
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
         dates = pd.bdate_range("2026-01-02", periods=14)
@@ -465,16 +461,14 @@ def test_runner_risk_sections_accept_single_industry_code_column():
                 row["comovement"] = 1.0
                 row["industry"] = "801760.INDX" if i < 20 else "801780.INDX"
                 risk_rows.append(row)
-        risk_path = tmp_path / "risk&industry" / "risk_exposure.csv"
-        risk_path.parent.mkdir()
-        pd.DataFrame(risk_rows).to_csv(risk_path, index=False)
+        risk_data = dataframe_to_risk_exposure(pd.DataFrame(risk_rows))
+        monkeypatch.setattr(runner_module, "resolve_risk_exposure", lambda *_args, **_kwargs: risk_data)
         cfg = BacktestConfig(
             paths=PathConfig(
                 data_root=tmp_path,
                 pool_dir=tmp_path / "pool",
-                risk_exposure_path=risk_path.relative_to(tmp_path),
             ),
-            data_sources=DataSourceConfig(risk_exposure_source="csv"),
+            data_sources=DataSourceConfig(risk_exposure_source="clickhouse"),
             output_root=tmp_path / "out",
             selected_pools=["all"],
             horizons=[1],
@@ -518,7 +512,7 @@ def test_runner_risk_sections_accept_single_industry_code_column():
         assert "Within-Industry 10-Group Forward Returns" in html
 
 
-def test_group_exposure_and_turnover_sections_render_edge_group_outputs():
+def test_group_exposure_and_turnover_sections_render_edge_group_outputs(monkeypatch):
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
         dates = pd.bdate_range("2026-01-02", periods=14)
@@ -542,16 +536,14 @@ def test_group_exposure_and_turnover_sections_render_edge_group_outputs():
                 row["bank"] = 1 if i < 20 else 0
                 row["tech"] = 1 if i >= 20 else 0
                 risk_rows.append(row)
-        risk_path = tmp_path / "risk&industry" / "risk_exposure.csv"
-        risk_path.parent.mkdir()
-        pd.DataFrame(risk_rows).to_csv(risk_path, index=False)
+        risk_data = dataframe_to_risk_exposure(pd.DataFrame(risk_rows))
+        monkeypatch.setattr(runner_module, "resolve_risk_exposure", lambda *_args, **_kwargs: risk_data)
         cfg = BacktestConfig(
             paths=PathConfig(
                 data_root=tmp_path,
                 pool_dir=tmp_path / "pool",
-                risk_exposure_path=risk_path.relative_to(tmp_path),
             ),
-            data_sources=DataSourceConfig(risk_exposure_source="csv"),
+            data_sources=DataSourceConfig(risk_exposure_source="clickhouse"),
             output_root=tmp_path / "out",
             selected_pools=["all"],
             horizons=[1],

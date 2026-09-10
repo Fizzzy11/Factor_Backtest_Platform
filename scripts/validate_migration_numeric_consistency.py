@@ -70,8 +70,8 @@ def _build_inputs():
     return factor, MarketDataBundle(open_price=open_price)
 
 
-def _write_risk_input(path: Path, dates: pd.DatetimeIndex, symbols: list[str]) -> None:
-    """写入每次工作进程都完全相同的风格和行业暴露输入。"""
+def _build_risk_input(dates: pd.DatetimeIndex, symbols: list[str]) -> pd.DataFrame:
+    """构造每次工作进程都完全相同的风格和行业暴露输入。"""
     from factor_backtest_platform.risk_exposure import DEFAULT_STYLE_COLUMNS
 
     rows = []
@@ -83,29 +83,29 @@ def _write_risk_input(path: Path, dates: pd.DatetimeIndex, symbols: list[str]) -
             row["银行"] = 1 if i < 50 else 0
             row["计算机"] = 1 if i >= 50 else 0
             rows.append(row)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame(rows).to_csv(path, index=False)
+    return pd.DataFrame(rows)
 
 
 def _worker(output_dir: Path) -> None:
     """在当前 PYTHONPATH 所指向的项目中运行一次并保存内存结果快照。"""
     import factor_backtest_platform
     from factor_backtest_platform.config import BacktestConfig, DataSourceConfig, PathConfig
+    from factor_backtest_platform.risk_exposure import dataframe_to_risk_exposure
+    import factor_backtest_platform.runner as runner_module
     from factor_backtest_platform.runner import run_factor_backtest
 
     output_dir.mkdir(parents=True, exist_ok=True)
     factor, market = _build_inputs()
     factor_hash_before = _sha256_frame(factor)
-    risk_path = output_dir / "inputs" / "risk_exposure.csv"
-    _write_risk_input(risk_path, factor.index, list(factor.columns))
+    risk_data = dataframe_to_risk_exposure(_build_risk_input(factor.index, list(factor.columns)))
+    runner_module.resolve_risk_exposure = lambda *_args, **_kwargs: risk_data
     config = BacktestConfig(
         paths=PathConfig(
             project_dir=Path(factor_backtest_platform.__file__).resolve().parents[1],
             data_root=output_dir,
             pool_dir=output_dir / "pool",
-            risk_exposure_path=risk_path,
         ),
-        data_sources=DataSourceConfig(risk_exposure_source="csv"),
+        data_sources=DataSourceConfig(risk_exposure_source="clickhouse"),
         output_root=output_dir / "results",
         factor_name="migration_numeric_consistency",
         selected_pools=["all"],
